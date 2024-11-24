@@ -1,6 +1,6 @@
 # uae4arm-libretro
 
-Based on old uae4arm version.
+Based on old uae4arm version with psp support.
 
 ## Controls
 
