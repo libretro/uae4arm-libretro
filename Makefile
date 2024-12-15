@@ -176,10 +176,18 @@ else ifeq ($(platform), classic_armv8_a35)
 	    LDFLAGS += -static-libgcc -static-libstdc++
 	  endif
 	endif
-else ifeq ($(platform), osx)
-	TARGET := $(TARGET_NAME)_libretro.dylib
-	fpic := -fPIC -mmacosx-version-min=10.6
-	SHARED := -dynamiclib
+else ifeq ($(platform), miyoomini)
+   	TARGET := $(TARGET_NAME)_libretro.so
+	CC = /opt/miyoomini-toolchain/usr/bin/arm-linux-gnueabihf-gcc
+	CXX = /opt/miyoomini-toolchain/usr/bin/arm-linux-gnueabihf-g++
+	AR = /opt/miyoomini-toolchain/usr/bin/arm-linux-gnueabihf-ar
+	fpic := -fPIC
+	LDFLAGS := -lpthread
+	SHARED := -shared -Wl,--version-script=$(CORE_DIR)/libretro/link.T 
+	PLATFORM_DEFINES += -mtune=cortex-a7 -mfpu=neon-vfpv4
+	CFLAGS += $(PLATFORM_DEFINES)
+	HAVE_NEON = 1
+	CPU_FLAGS +=  -marm
 else ifeq ($(platform), android)
 	CC = arm-linux-androideabi-gcc
 	CXX =arm-linux-androideabi-g++
@@ -189,25 +197,7 @@ else ifeq ($(platform), android)
 	fpic := -fPIC
 	LDFLAGS := -lm -llog
 	SHARED :=  -Wl,--fix-cortex-a8 -shared -Wl,--version-script=$(CORE_DIR)/libretro/link.T -Wl,--no-undefined
-	PLATFLAGS += -DANDROID -DAND -DANDPORT -DARM_OPT_TEST=1
-else ifeq ($(platform), wii)
-	TARGET := $(TARGET_NAME)_libretro_wii.a
-	CC = $(DEVKITPPC)/bin/powerpc-eabi-gcc$(EXE_EXT)
-	AR = $(DEVKITPPC)/bin/powerpc-eabi-ar$(EXE_EXT)   
-	ZLIB_DIR = $(LIBUTILS)/zlib/
-	CFLAGS += -DSDL_BYTEORDER=SDL_BIG_ENDIAN -DMSB_FIRST -DBYTE_ORDER=BIG_ENDIAN  -DBYTE_ORDER=BIG_ENDIAN \
-	-DWIIPORT=1 -DHAVE_MEMALIGN -DHAVE_ASPRINTF -I$(ZLIB_DIR) -I$(DEVKITPRO)/libogc/include \
-	-D__powerpc__ -D__POWERPC__ -DGEKKO -DHW_RVL -mrvl -mcpu=750 -meabi -mhard-float -D__ppc__
-	LDFLAGS :=   -lm -lpthread -lc
-	PLATFLAGS += -DWIIPORT
-else ifeq ($(platform), ps3)
-	TARGET := $(TARGET_NAME)_libretro_ps3.a
-	CC = $(CELL_SDK)/host-win32/ppu/bin/ppu-lv2-gcc.exe
-	AR = $(CELL_SDK)/host-win32/ppu/bin/ppu-lv2-ar.exe
-	ZLIB_DIR = $(LIBUTILS)/zlib/
-	LDFLAGS :=   -lm -lpthread -lc
-	CFLAGS += -DSDL_BYTEORDER=SDL_BIG_ENDIAN -DMSB_FIRST -DBYTE_ORDER=BIG_ENDIAN  -DBYTE_ORDER=BIG_ENDIAN \
-	-D__CELLOS_LV2 -DPS3PORT=1 -DHAVE_MEMALIGN -DHAVE_ASPRINTF -I$(ZLIB_DIR)  
+	PLATFLAGS += -DANDROID -DAND -DANDPORT -DARM_OPT_TEST=1 
 else
 
 ifeq ($(subplatform), 32)

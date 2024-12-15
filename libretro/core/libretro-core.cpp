@@ -259,7 +259,7 @@ void update_prefs_retrocfg(struct uae_prefs * prefs)
       LOGI("[libretro-uae4arm]: Got model: %s.\n", var.value);
       if (strcmp(var.value, "Auto") == 0)
       {
-         if (strcasestr(RPATH,"aga") != NULL)
+         if ((strcasestr(RPATH,"aga") != NULL) || (strcasestr(RPATH,"a1200") != NULL))
          {
             LOGI("[libretro-uae4arm]: Auto-model -> A1200 selected\n");
             var.value = "A1200";
