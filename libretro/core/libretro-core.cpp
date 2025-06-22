@@ -53,6 +53,8 @@ extern void Emu_uninit();
 extern void input_gui(void);
 extern void retro_virtualkb(void);
 
+extern void flush_audio(void);
+
 const char *retro_save_directory;
 const char *retro_system_directory;
 const char *retro_content_directory;
@@ -257,7 +259,7 @@ void update_prefs_retrocfg(struct uae_prefs * prefs)
       LOGI("[libretro-uae4arm]: Got model: %s.\n", var.value);
       if (strcmp(var.value, "Auto") == 0)
       {
-         if (strcasestr(RPATH,"aga") != NULL)
+         if ((strcasestr(RPATH,"aga") != NULL) || (strcasestr(RPATH,"a1200") != NULL))
          {
             LOGI("[libretro-uae4arm]: Auto-model -> A1200 selected\n");
             var.value = "A1200";
@@ -655,7 +657,9 @@ void retro_set_video_refresh(retro_video_refresh_t cb)
 }
 
 
-void retro_audiocb(signed short int *sound_buffer,int sndbufsize){
+
+void retro_audiocb(signed short int *sound_buffer,int sndbufsize)
+{
 
     if(pauseg==0)
         audio_batch_cb(sound_buffer, sndbufsize);
@@ -718,6 +722,8 @@ void retro_run(void)
    if(pauseg==0)
       if(SHOWKEY )
          retro_virtualkb();
+
+   flush_audio();
 
    video_cb(Retro_Screen,retrow,retroh,retrow<<PIXEL_BYTES);
 

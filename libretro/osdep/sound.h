@@ -13,7 +13,7 @@
 #endif
 
 #define SOUND_BUFFERS_COUNT 1
-#define SNDBUFFER_LEN 2048
+#define SNDBUFFER_LEN 256
 
 extern uae_u16 sndbuffer[SOUND_BUFFERS_COUNT][(SNDBUFFER_LEN+32)*DEFAULT_SOUND_CHANNELS];
 extern uae_u16 *sndbufpt;

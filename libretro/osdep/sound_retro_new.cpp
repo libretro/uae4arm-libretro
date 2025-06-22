@@ -1,6 +1,6 @@
  /* 
-  * Sdl sound.c implementation
-  * (c) 2015
+  * libretro sound.c implementation
+  * (c) 2021 Chips
   */
 
 #include <sys/types.h>
@@ -19,11 +19,7 @@
 #include "debug.h"
 #include "audio.h"
 #include "gensound.h"
-#if defined(__LIBRETRO__)
 #include "osdep/sound.h"
-#else
-#include "sd-pandora/sound.h"
-#endif
 #include "custom.h"
 
 #ifdef ANDROIDSDL
@@ -31,9 +27,6 @@
 #endif
 
 extern unsigned long next_sample_evtime;
-
-int produce_sound=0;
-int changed_produce_sound=0;
 
 uae_u16 sndbuffer[SOUND_BUFFERS_COUNT][(SNDBUFFER_LEN+32)*DEFAULT_SOUND_CHANNELS];
 unsigned n_callback_sndbuff, n_render_sndbuff;
@@ -61,14 +54,6 @@ void resume_sound (void) { }
 void update_sound (int) { }
 
 void reset_sound (void) { }
-
-void uae4all_init_sound(void) { }
-
-void uae4all_play_click(void) { }
-
-void uae4all_pause_music(void) { }
-
-void uae4all_resume_music(void) { }
 
 void restart_sound_buffer(void) { }
 
@@ -139,6 +124,7 @@ void pandora_stop_sound(void)
 
 }
 
+extern void retro_audiocb(signed short int *sound_buffer,int sndbufsize);
 static int wrcnt = 0;
 void finish_sound_buffer (void)
 {
@@ -147,19 +133,18 @@ void finish_sound_buffer (void)
 	dbg("sound.c : finish_sound_buffer");
 #endif
 
-	extern void retro_audiocb(signed short int *sound_buffer,int sndbufsize);
 	retro_audiocb((short int*)sndbuffer[wrcnt%SOUND_BUFFERS_COUNT], SNDBUFFER_LEN);
 
 
-	wrcnt++;
+	//wrcnt++;
 	sndbufpt = render_sndbuff = sndbuffer[wrcnt%SOUND_BUFFERS_COUNT];
 	//__android_log_print(ANDROID_LOG_INFO, "UAE4ALL2","Sound buffer write cnt %d buf %d\n", wrcnt, wrcnt%SOUND_BUFFERS_COUNT);
 
 
 	if(currprefs.sound_stereo)
-	  finish_sndbuff = sndbufpt + SNDBUFFER_LEN;
+	  finish_sndbuff = sndbufpt + SNDBUFFER_LEN*2;
 	else
-	  finish_sndbuff = sndbufpt + SNDBUFFER_LEN/2;	
+	  finish_sndbuff = sndbufpt + SNDBUFFER_LEN;	
 
 #ifdef DEBUG_SOUND
 	dbg(" sound.c : ! finish_sound_buffer");
@@ -167,13 +152,24 @@ void finish_sound_buffer (void)
 }
 
 
+void flush_audio(void)
+{
+
+  // Flush audio buffer in order to render all audio samples for a given frame. It's better for some frontend
+
+  retro_audiocb((short int*) sndbuffer[wrcnt%SOUND_BUFFERS_COUNT], (sndbufpt - render_sndbuff)/2);
+
+  restart_sound_buffer();
+}
+
+
 void restart_sound_buffer(void)
 {
 	sndbufpt = render_sndbuff = sndbuffer[wrcnt%SOUND_BUFFERS_COUNT];
 	if(currprefs.sound_stereo)
-	  finish_sndbuff = sndbufpt + SNDBUFFER_LEN;
+	  finish_sndbuff = sndbufpt + SNDBUFFER_LEN*2;
 	else
-	  finish_sndbuff = sndbufpt + SNDBUFFER_LEN/2;	  
+	  finish_sndbuff = sndbufpt + SNDBUFFER_LEN;
 }
 
 /* Try to determine whether sound is available.  This is only for GUI purposes.  */
@@ -288,39 +284,6 @@ void resume_sound (void)
 #endif
 }
 
-void uae4all_init_sound(void)
-{
-#ifdef DEBUG_SOUND
-    dbg("sound.c : uae4all_init_sound");
-#endif
-#ifdef DEBUG_SOUND
-    dbg(" sound.c : ! uae4all_init_sound");
-#endif
-}
-
-void uae4all_pause_music(void)
-{
-#ifdef DEBUG_SOUND
-    dbg("sound.c : pause_music");
-#endif
-#ifdef DEBUG_SOUND
-    dbg(" sound.c : ! pause_music");
-#endif
-}
-
-void uae4all_resume_music(void)
-{
-#ifdef DEBUG_SOUND
-    dbg("sound.c : resume_music");
-#endif
-#ifdef DEBUG_SOUND
-    dbg(" sound.c : ! resume_music");
-#endif
-}
-
-void uae4all_play_click(void)
-{
-}
 
 void reset_sound (void)
 {
