@@ -2,6 +2,7 @@
 #include <iostream>
 #include <vector>
 #include <sstream>
+#include <unistd.h>
 #ifndef __LIBRETRO__
 #include <guichan.hpp>
 #include <guichan/sdl.hpp>
@@ -37,7 +38,7 @@
 #include "SDL.h"
 #include "td-sdl/thread.h"
 
-#ifdef RASPBERRY
+#if defined(RASPBERRY) && !defined(VITA)
  #include <linux/kd.h>
  #include <sys/ioctl.h>
 #endif
@@ -468,7 +469,9 @@ int gui_init (void)
 
 void gui_exit(void)
 {
+#ifndef VITA
 	sync();
+#endif
 	pandora_stop_sound();
 	saveAdfDir();
 	ClearConfigFileList();
@@ -606,7 +609,7 @@ void gui_disk_image_change (int unitnum, const char *name, bool writeprotected)
 
 void gui_led (int led, int on, int brightness)
 {
-#ifdef RASPBERRY
+#if defined(RASPBERRY) && !defined(VITA)
    #define LED_ALL   -1         // Define for all LEDs
    
    unsigned char kbd_led_status;

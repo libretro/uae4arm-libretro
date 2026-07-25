@@ -4,9 +4,10 @@ LIBUTILS = $(CORE_DIR)/utils
 #GUI      = $(CORE_DIR)/src/gui-retro
 LIBRETRO = $(CORE_DIR)/libretro
 GUI	 := $(CORE_DIR)/libretro/gui
+DEPS_DIR = $(CORE_DIR)/deps
 
 INCFLAGS := -I$(EMU) -I$(EMU)/od-pandora -I$(EMU)/include -I$(LIBRETRO) \
-	-I$(LIBRETRO)/libco -I$(LIBRETRO)/core -I$(LIBUTILS)  -I$(EMU)menu -Ideps -I$(EMU)/archivers
+	-I$(LIBRETRO)/libco -I$(LIBRETRO)/core -I$(LIBUTILS)  -I$(EMU)menu -Ideps -I$(EMU)/archivers -I$(DEPS_DIR)/zlib
 
 INCFLAGS += -I$(CORE_DIR)/libretro/libco \
 			-I$(CORE_DIR)/libretro/core \
@@ -25,7 +26,6 @@ OBJS =	\
 	$(EMU)/blitter.o \
 	$(EMU)/blkdev.o \
 	$(EMU)/blkdev_cdimage.o \
-	$(EMU)/bsdsocket.o \
 	$(EMU)/calc.o \
 	$(EMU)/cd32_fmv.o \
 	$(EMU)/cd32_fmv_genlock.o \
@@ -160,7 +160,6 @@ OBJS += $(EMU)/jit/compstbl.o
 
 OBJS += $(EMU)/jit/compemu_support.o \
 	$(EMU)/md-pandora/support.o \
-	$(EMU)/od-pandora/bsdsocket_host.o \
 	$(EMU)/od-pandora/cda_play.o \
 	$(EMU)/od-pandora/charset.o \
 	$(EMU)/od-pandora/fsdb_host.o \
@@ -177,6 +176,11 @@ OBJS += $(EMU)/jit/compemu_support.o \
 	$(EMU)/sd-retro/sound_retro_new.o \
 	$(EMU)/od-pandora/pandora_gui.o \
 	$(EMU)/td-sdl/thread.o
+
+ifneq ($(platform),vita)
+	OBJS += $(EMU)/bsdsocket.o
+	OBJS += $(EMU)/od-pandora/bsdsocket_host.o
+endif
 
 OBJS += \
 	$(CORE_DIR)/libretro/core/libretro-core.o \
@@ -246,3 +250,17 @@ OBJS += \
 SOURCES_C += 	 $(LIBRETRO)/libco/libco.c 
 
 
+SOURCES_C += $(DEPS_DIR)/zlib/adler32.c \
+	$(DEPS_DIR)/zlib/compress.c \
+	$(DEPS_DIR)/zlib/crc32.c \
+	$(DEPS_DIR)/zlib/deflate.c \
+	$(DEPS_DIR)/zlib/gzclose.c \
+	$(DEPS_DIR)/zlib/gzlib.c \
+	$(DEPS_DIR)/zlib/gzread.c \
+	$(DEPS_DIR)/zlib/gzwrite.c \
+	$(DEPS_DIR)/zlib/inffast.c \
+	$(DEPS_DIR)/zlib/inflate.c \
+	$(DEPS_DIR)/zlib/inftrees.c \
+	$(DEPS_DIR)/zlib/trees.c \
+	$(DEPS_DIR)/zlib/uncompr.c \
+	$(DEPS_DIR)/zlib/zutil.c

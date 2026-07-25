@@ -25,11 +25,13 @@ UAE_DLHANDLE uae_dlopen(const TCHAR *path)
 #ifdef _WIN32
 	result = LoadLibrary(path);
 #else
+#ifndef VITA
 	result = dlopen(path, RTLD_NOW);
 	const char *error = dlerror();
 	if (error != NULL)  {
 		write_log("DLOPEN: %s\n", error);
 	}
+#endif
 #endif
 	if (result == NULL) {
 		write_log("DLOPEN: Failed to open %s\n", path);
@@ -47,7 +49,9 @@ void *uae_dlsym(UAE_DLHANDLE handle, const char *name)
 #ifdef _WIN32
 	return (void *) GetProcAddress(handle, name);
 #else
+#ifndef VITA
 	return dlsym(handle, name);
+#endif
 #endif
 }
 
@@ -56,7 +60,9 @@ void uae_dlclose(UAE_DLHANDLE handle)
 #ifdef _WIN32
 	FreeLibrary (handle);
 #else
+#ifndef VITA
 	dlclose(handle);
+#endif
 #endif
 }
 

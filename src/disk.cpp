@@ -269,7 +269,9 @@ static void disk_date (uae_u8 *p)
 	struct mytimeval mtv;
 
 	gettimeofday (&tv, NULL);
+#ifndef VITA
 	tv.tv_sec -= _timezone;
+#endif
 	mtv.tv_sec = tv.tv_sec;
 	mtv.tv_usec = tv.tv_usec;
 	timeval_to_amiga (&mtv, &days, &mins, &ticks, 50);
@@ -4127,6 +4129,9 @@ void changedisk(bool plus)
     }
     else
     {
+#ifdef VITA
+        LOGI("Disk %s not found !.\n",strnefile.c_str());
+#else
         glob_t globbuf;
         //LOGI("Disk    %s not found !.\n",strnefile.c_str());
         strnefile = fnamenodsk + constdisk + strnewdisk + constdiskof + strtotdisk + ")" + "*"; 
@@ -4143,6 +4148,7 @@ void changedisk(bool plus)
         //else
             //LOGI("Disk %s not found !.\n",strnefile.c_str());
         globfree(&globbuf);
+#endif
     }
 }
 #endif

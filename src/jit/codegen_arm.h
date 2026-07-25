@@ -173,7 +173,7 @@
 /* ========================================================================= */
 
 /* Branch instructions */
-#ifndef __ANDROID__
+#if !defined(__ANDROID__) && !defined(VITA)
 enum {
 	_B, _BL, _BLX, _BX, _BXJ
 };

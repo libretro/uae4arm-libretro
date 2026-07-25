@@ -24,6 +24,12 @@
 
 #include <zlib.h>
 
+#if defined(VITA)
+#define tzset()
+#define timezone 0
+#define daylight 0
+#endif
+
 #define unpack_log write_log
 #undef unpack_log
 #define unpack_log(fmt, ...)

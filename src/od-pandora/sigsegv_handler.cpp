@@ -36,10 +36,14 @@
 #endif
 #include "uae.h"
 
+#ifndef VITA
 #include <asm/sigcontext.h>
+#endif
 #include <signal.h>
+#ifndef VITA
 #include <dlfcn.h>
 #include <execinfo.h>
+#endif
 #include <SDL.h>
 
 #ifdef JIT
@@ -290,6 +294,14 @@ extern void disam_range(void *start, void *stop);
 	return handled;
 } 
 
+#ifdef VITA
+void signal_segv(int signum)
+{
+  //FIX ME
+  write_log("Illegal Instruction!\n");
+  abort();
+}
+#else
 void signal_segv(int signum, siginfo_t* info, void*ptr) 
 {
   int handled = HANDLE_EXCEPTION_NONE;
@@ -383,8 +395,16 @@ void signal_segv(int signum, siginfo_t* info, void*ptr)
   SDL_Quit();
   exit(1);
 }
+#endif
 
-
+#ifdef VITA
+void signal_buserror(int signum, siginfo_t* info, void*ptr)
+{
+  //FIX ME
+  write_log("Illegal Instruction!\n");
+  abort();
+}
+#else
 void signal_buserror(int signum, siginfo_t* info, void*ptr) 
 {
   ucontext_t *ucontext = (ucontext_t*)ptr;
@@ -450,6 +470,7 @@ void signal_buserror(int signum, siginfo_t* info, void*ptr)
   SDL_Quit();
   exit(1);
 }
+#endif
 
 #else
 
@@ -656,6 +677,14 @@ static int handle_exception(unsigned long *pregs, long fault_addr)
 	return handled;
 } 
 
+#ifdef VITA
+void signal_segv(int signum)
+{
+  //FIX ME
+  write_log("Illegal Instruction!\n");
+  abort();
+}
+#else
 void signal_segv(int signum, siginfo_t* info, void*ptr) 
 {
   int handled = HANDLE_EXCEPTION_NONE;
@@ -780,8 +809,16 @@ void signal_segv(int signum, siginfo_t* info, void*ptr)
   SDL_Quit();
   exit(1);
 }
+#endif
 
-
+#ifdef VITA
+void signal_buserror(int signum, siginfo_t* info, void*ptr)
+{
+  //FIX ME
+  write_log("Illegal Instruction!\n");
+  abort();
+}
+#else
 void signal_buserror(int signum, siginfo_t* info, void*ptr) 
 {
   ucontext_t *ucontext = (ucontext_t*)ptr;
@@ -878,6 +915,7 @@ void signal_buserror(int signum, siginfo_t* info, void*ptr)
   SDL_Quit();
   exit(1);
 }
+#endif
 
 #endif
 

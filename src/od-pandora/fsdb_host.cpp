@@ -41,9 +41,17 @@ int dos_errno(void)
 
 bool my_stat (const TCHAR *name, struct mystat *statbuf)
 {
+#ifdef VITA
+  struct stat st;
+#else
   struct stat64 st;
-  
+#endif
+
+#ifdef VITA
+  if(stat(name, &st) == -1) {
+#else
   if(stat64(name, &st) == -1) {
+#endif
     write_log("my_stat: stat on file %s failed\n", name);
     return false;
   }
@@ -68,8 +76,16 @@ bool my_chmod (const TCHAR *name, uae_u32 mode)
   // Note: only used to set or clear write protect on disk file
   
   // get current state
+#ifdef VITA
+  struct stat st;
+#else
   struct stat64 st;
+#endif
+#ifdef VITA
+  if(stat(name, &st) == -1) {
+#else
   if(stat64(name, &st) == -1) {
+#endif
     write_log("my_chmod: stat on file %s failed\n", name);
     return false;
   }
@@ -82,7 +98,11 @@ bool my_chmod (const TCHAR *name, uae_u32 mode)
     st.st_mode &= ~(S_IWUSR);
   chmod(name, st.st_mode);
 
+#ifdef VITA
+  stat(name, &st);
+#else
   stat64(name, &st);
+#endif
   int newmode = 0;
   if (st.st_mode & S_IRUSR) {
     newmode |= FILEFLAG_READ;

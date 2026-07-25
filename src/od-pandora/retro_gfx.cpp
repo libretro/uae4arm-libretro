@@ -24,8 +24,10 @@
 #include <android/log.h>
 #endif
 
+#ifndef VITA
 #include <linux/fb.h>
 #include <sys/ioctl.h>
+#endif
 
 extern unsigned int retrow,retroh;
 

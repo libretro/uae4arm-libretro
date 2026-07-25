@@ -3300,8 +3300,10 @@ void rethink_uae_int(void)
 	{
 		extern void bsdsock_fake_int_handler (void);
 		extern int volatile bsd_int_requested;
+#ifdef BSDSOCKET
 		if (bsd_int_requested)
 			bsdsock_fake_int_handler ();
+#endif
 	}
 
 	uae_u16 mask = (irq6 ? 0x2000 : 0) | (irq2 ? 0x0008 : 0);

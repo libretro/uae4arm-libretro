@@ -156,6 +156,23 @@ static int safe_read (int desc, TCHAR *ptr, int len)
   return n_chars;
 }
 
+#ifdef VITA
+#define TCHAR char
+static int get_fs_usage_fake(const TCHAR *path, const TCHAR *disk, struct fs_usage *fsp)
+{
+  //fsp->total = 0x7fffff;
+  //fsp->avail = 0x3fffff;
+
+	fsp->fsu_blocks = 507289;
+	fsp->fsu_bfree = 3435973;
+	fsp->fsu_bavail = 507289 / 2;
+	fsp->fsu_files = 3435973;
+	fsp->fsu_ffree = 3435973;
+
+  return 0;
+}
+#endif
+
 /* Fill in the fields of FSP with information about space usage for
    the filesystem on which PATH resides.
    DISK is the device on which PATH is mounted, for space-getting
@@ -166,6 +183,9 @@ static int safe_read (int desc, TCHAR *ptr, int len)
 #ifndef WINDOWS
 int get_fs_usage (const TCHAR *path, const TCHAR *disk, struct fs_usage *fsp)
 {
+#ifdef VITA
+  return get_fs_usage_fake(path, disk, fsp);
+#endif
 #ifdef STAT_STATFS3_OSF1
 # define CONVERT_BLOCKS(B) adjust_blocks ((B), fsd.f_fsize, 512)
 

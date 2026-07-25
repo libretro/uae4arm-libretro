@@ -4,6 +4,11 @@
  */
 
 #include "libretro.h"
+
+#ifdef VITA
+#define __GNU_VISIBLE 1
+int _newlib_heap_size_user = 287 * 1024 * 1024;
+#endif
 #include "libretro-core.h"
 
 #include "libretro/retrodep/WHDLoad_files.zip.c"

@@ -1,4 +1,7 @@
 #include <sys/timeb.h>
+#if defined(VITA)
+#define lstat stat
+#endif
 #include <fcntl.h>
 #include <unistd.h>
 #include "sysconfig.h"

@@ -188,6 +188,7 @@ static int do_read (struct cdunit *cdu, struct cdtoc *t, uae_u8 *data, int secto
 }
 
 // WOHOO, library that supports virtual file access functions. Perfect!
+#ifndef VITA
 static void flac_metadata_callback (const FLAC__StreamDecoder *decoder, const FLAC__StreamMetadata *metadata, void *client_data)
 {
 	struct cdtoc *t = (struct cdtoc*)client_data;
@@ -244,9 +245,11 @@ static FLAC__bool file_eof_callback (const FLAC__StreamDecoder *decoder, void *c
 	struct cdtoc *t = (struct cdtoc*)client_data;
 	return zfile_ftell (t->handle) >= zfile_size (t->handle);
 }
+#endif
 
 static void flac_get_size (struct cdtoc *t)
 {
+#ifndef VITA
 	FLAC__StreamDecoder *decoder = FLAC__stream_decoder_new ();
 	if (decoder) {
 		FLAC__stream_decoder_set_md5_checking (decoder, false);
@@ -258,9 +261,11 @@ static void flac_get_size (struct cdtoc *t)
 		FLAC__stream_decoder_process_until_end_of_metadata (decoder);
 		FLAC__stream_decoder_delete (decoder);
 	}
+#endif
 }
 static uae_u8 *flac_get_data (struct cdtoc *t)
 {
+#ifndef VITA
 	write_log (_T("FLAC: unpacking '%s'..\n"), zfile_getname (t->handle));
 	t->writeoffset = 0;
 	FLAC__StreamDecoder *decoder = FLAC__stream_decoder_new ();
@@ -275,6 +280,7 @@ static uae_u8 *flac_get_data (struct cdtoc *t)
 		write_log (_T("FLAC: %s unpacked\n"), zfile_getname (t->handle));
 	}
 	return t->data;
+#endif
 }
 
 void sub_to_interleaved (const uae_u8 *s, uae_u8 *d)

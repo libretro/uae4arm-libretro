@@ -52,6 +52,10 @@
 #include "picasso96.h"
 #include "rommgr.h"
 
+#if defined(VITA)
+#define utime(file,time) 0
+#endif
+
 #define TRACING_ENABLED 0
 int log_filesys = 0;
 

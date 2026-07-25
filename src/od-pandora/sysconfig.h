@@ -1,6 +1,10 @@
 #ifndef UAE_SYSCONFIG_H
 #define UAE_SYSCONFIG_H
 
+#ifdef VITA
+#define PATH_MAX 4096
+#endif
+
 #define SUPPORT_THREADS
 #define MAX_DPATH PATH_MAX
 
@@ -53,7 +57,9 @@
 #define ACTION_REPLAY /* Action Replay 1/2/3 support */
 /* #define PICASSO96 */ /* Picasso96 display card emulation */
 /* #define UAEGFX_INTERNAL */ /* built-in libs:picasso96/uaegfx.card */
+#ifndef VITA
 #define BSDSOCKET /* bsdsocket.library emulation */
+#endif
 #define CAPS /* CAPS-image support */
 /* #define SCP */ /* SuperCardPro */
 #define FDI2RAW /* FDI 1.0 and 2.x image support */
@@ -449,7 +455,9 @@ typedef int32_t uae_atomic;
 #define HAVE_SYS_IPC_H 1
 
 /* Define if you have the <sys/mount.h> header file.  */
+#ifndef VITA
 #define HAVE_SYS_MOUNT_H 1
+#endif
 
 /* Define if you have the <sys/ndir.h> header file.  */
 /* #undef HAVE_SYS_NDIR_H */
@@ -467,7 +475,9 @@ typedef int32_t uae_atomic;
 #define HAVE_SYS_STAT_H 1
 
 /* Define if you have the <sys/statfs.h> header file.  */
+#ifndef VITA
 #define HAVE_SYS_STATFS_H 1
+#endif
 
 /* Define if you have the <sys/statvfs.h> header file.  */
 /* #undef HAVE_SYS_STATVFS_H */
@@ -485,7 +495,9 @@ typedef int32_t uae_atomic;
 /* #undef HAVE_SYS_UTIME_H */
 
 /* Define if you have the <sys/vfs.h> header file.  */
+#ifndef VITA
 #define HAVE_SYS_VFS_H 1
+#endif
 
 /* Define if you have the <unistd.h> header file.  */
 #define HAVE_UNISTD_H 1
@@ -551,8 +563,13 @@ typedef char TCHAR;
 #define _timezone           timezone
 #define _daylight           daylight
 #define _ftime(x)           ftime(x)
+#ifdef VITA
+#define _ftelli64(x)        ftello(x)
+#define _fseeki64(x,y,z)    fseeko(x,y,z)
+#else
 #define _ftelli64(x)        ftello64(x)
 #define _fseeki64(x,y,z)    fseeko64(x,y,z)
+#endif
 #define _wunlink(x)         unlink(x)
 #define _istalnum(x)        isalnum(x)
 

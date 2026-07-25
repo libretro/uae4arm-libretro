@@ -10,10 +10,14 @@
 #include <vector>
 #include <stdlib.h>
 #include <stdarg.h>
+#ifndef VITA
 #include <asm/sigcontext.h>
+#endif
 #include <signal.h>
+#ifndef VITA
 #include <dlfcn.h>
 #include <execinfo.h>
+#endif
 #include "sysconfig.h"
 #include "sysdeps.h"
 #include "config.h"
@@ -56,7 +60,20 @@ int quickstart_start = 1;
 int quickstart_model = 0;
 int quickstart_conf = 0;
 
+#ifdef VITA
+#include <psp2/kernel/processmgr.h>
+#define usleep sceKernelDelayThreadCB;
+enum {
+	DT_UNKNOWN,
+	DT_LNK,
+	DT_DIR,
+	DT_REG
+};
+extern void signal_segv(int) ;
+#else
 extern void signal_segv(int signum, siginfo_t* info, void*ptr);
+#endif
+
 extern void signal_buserror(int signum, siginfo_t* info, void*ptr);
 extern void signal_term(int signum, siginfo_t* info, void*ptr);
 extern void gui_force_rtarea_hdchange(void);
@@ -602,6 +619,14 @@ void removeFileExtension(char *filename)
   *p = '\0';
 }
 
+#ifdef VITA
+int is_dir_file(const char *path){
+    struct stat path_stat;
+    stat(path, &path_stat);
+    return S_ISDIR(path_stat.st_mode);
+
+}
+#endif
 
 void ReadDirectory(const char *path, std::vector<std::string> *dirs, std::vector<std::string> *files)
 {
@@ -618,7 +643,11 @@ void ReadDirectory(const char *path, std::vector<std::string> *dirs, std::vector
   {
     while((dent = readdir(dir)) != NULL)
     {
+#ifdef VITA
+      if(is_dir_file(dent->d_name))
+#else
       if(dent->d_type == DT_DIR)
+#endif
       {
         if(dirs != NULL)
           dirs->push_back(dent->d_name);
@@ -924,7 +953,9 @@ int main (int argc, char *argv[])
 	getcwd(start_path_data, MAX_DPATH);
 
 #ifdef __LIBRETRO__
-#if defined(ANDROID) || defined(__ANDROID__)
+#if defined(VITA)
+sprintf(start_path_data,"ux0:/data/retroarch/system/uae4arm\0");
+#elif defined(ANDROID) || defined(__ANDROID__)
 sprintf(start_path_data,"/mnt/sdcard/uae4arm\0");
 #else
 sprintf(start_path_data,"%s/uae4arm\0",retro_system_directory);
@@ -939,6 +970,9 @@ LOGI("spd(%s)\n",start_path_data);
   snprintf(savestate_fname, MAX_PATH, "%s/saves/default.ads", start_path_data);
 	logging_init ();
   
+#ifdef VITA
+ signal(SIGINT, &signal_segv);
+#else
   memset(&action, 0, sizeof(action));
   action.sa_sigaction = signal_segv;
   action.sa_flags = SA_SIGINFO;
@@ -952,7 +986,11 @@ LOGI("spd(%s)\n",start_path_data);
     printf("Failed to set signal handler (SIGILL).\n");
     abort();
   }
+#endif
 
+#ifdef VITA
+ signal(SIGBUS, &signal_buserror);
+#else
   memset(&action, 0, sizeof(action));
   action.sa_sigaction = signal_buserror;
   action.sa_flags = SA_SIGINFO;
@@ -970,6 +1008,7 @@ LOGI("spd(%s)\n",start_path_data);
     printf("Failed to set signal handler (SIGTERM).\n");
     abort();
   }
+#endif
 
   alloc_AmigaMem();
   RescanROMs();

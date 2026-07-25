@@ -11,12 +11,21 @@
 #include "akiko.h"
 #include "ar.h"
 #include "uae/mman.h"
+#if !defined(VITA)
 #include <sys/mman.h>
+#endif
 #include <SDL.h>
 
+#ifdef VITA
+#include <malloc.h>
+#define MAP_FAILED	((void *) -1)
+#endif
 
 static uae_u32 natmem_size;
 uae_u32 max_z3fastmem;
+#ifdef VITA
+#define MAXAMIGAMEM 0x6000000 // 64 MB (16 MB for standard Amiga stuff, 16 MG RTG, 64 MB Z3 fast)
+#endif
 
 /* JIT can access few bytes outside of memory block of it executes code at the very end of memory block */
 #define BARRIER 32
@@ -39,7 +48,7 @@ void free_AmigaMem(void)
 {
   if(regs.natmem_offset != 0)
   {
-#ifdef RASPBERRY
+#if defined(RASPBERRY) && !defined(VITA)
     munmap(regs.natmem_offset, natmem_size + BARRIER);
 #else
     free(regs.natmem_offset);
@@ -48,12 +57,20 @@ void free_AmigaMem(void)
   }
   if(additional_mem != MAP_FAILED)
   {
+#ifdef VITA
+	free(additional_mem);
+#else
     munmap(additional_mem, ADDITIONAL_MEMSIZE + BARRIER);
+#endif
     additional_mem = (uae_u8*) MAP_FAILED;
   }
   if(a3000_mem != MAP_FAILED)
   {
+#ifdef VITA
+	free(a3000_mem);
+#else
     munmap(a3000_mem, a3000_totalsize);
+#endif
     a3000_mem = (uae_u8*) MAP_FAILED;
     a3000_totalsize = 0;
   }
@@ -67,15 +84,20 @@ void alloc_AmigaMem(void)
 	int max_allowed_mman;
 
   free_AmigaMem();
+#ifdef VITA
+	total =  MAXAMIGAMEM;
+#endif
 	set_expamem_z3_hack_mode(Z3MAPPING_AUTO);
 
   // First attempt: allocate 16 MB for all memory in 24-bit area 
   // and additional mem for Z3 and RTG at correct offset
   natmem_size = 16 * 1024 * 1024;
-#ifdef RASPBERRY
+#if defined(RASPBERRY) && !defined(VITA)
   // address returned by valloc() too high for later mmap() calls. Use mmap() also for first area.
   regs.natmem_offset = (uae_u8*) mmap((void *)0x20000000, natmem_size + BARRIER,
     PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED, -1, 0);
+#elif defined(VITA)
+	regs.natmem_offset = (uae_u8*)memalign(MAXAMIGAMEM,  (natmem_size));
 #else
   regs.natmem_offset = (uae_u8*)valloc (natmem_size + BARRIER);
 #endif
@@ -84,8 +106,12 @@ void alloc_AmigaMem(void)
 		write_log("Can't allocate 16M of virtual address space!?\n");
     abort();
 	}
+#ifdef VITA
+	additional_mem = (uae_u8*)malloc(ADDITIONAL_MEMSIZE + BARRIER);
+#else
   additional_mem = (uae_u8*) mmap(regs.natmem_offset + Z3BASE_REAL, ADDITIONAL_MEMSIZE + BARRIER,
     PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED, -1, 0);
+#endif
   if(additional_mem != MAP_FAILED)
   {
     // Allocation successful -> we can use natmem_offset for entire memory access at real address
@@ -102,8 +128,12 @@ void alloc_AmigaMem(void)
     return;
   }
 
+#ifdef VITA
+  additional_mem = (uae_u8*)malloc(ADDITIONAL_MEMSIZE + BARRIER);
+#else
   additional_mem = (uae_u8*) mmap(regs.natmem_offset + Z3BASE_UAE, ADDITIONAL_MEMSIZE + BARRIER,
     PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED, -1, 0);
+#endif
   if(additional_mem != MAP_FAILED)
   {
     // Allocation successful -> we can use natmem_offset for entire memory access at fake address
@@ -119,7 +149,7 @@ void alloc_AmigaMem(void)
     set_expamem_z3_hack_mode(Z3MAPPING_UAE);
     return;
   }
-#ifdef RASPBERRY
+#if defined(RASPBERRY) && !defined(VITA)
   munmap(regs.natmem_offset, natmem_size + BARRIER);
 #else
   free(regs.natmem_offset);
@@ -127,7 +157,11 @@ void alloc_AmigaMem(void)
   
   // Next attempt: allocate huge memory block for entire area
   natmem_size = ADDITIONAL_MEMSIZE + 256 * 1024 * 1024;
+#if defined(VITA)
+  regs.natmem_offset = (uae_u8*)memalign(MAXAMIGAMEM, (natmem_size));
+#else
   regs.natmem_offset = (uae_u8*)valloc (natmem_size + BARRIER);
+#endif
   if(regs.natmem_offset)
   {
     // Allocation successful
@@ -173,7 +207,11 @@ bool HandleA3000Mem(int lowsize, int highsize)
   if(a3000_mem != MAP_FAILED)
   {
     write_log("HandleA3000Mem(): Free A3000 memory (0x%08x). %d MB.\n", a3000_mem, a3000_totalsize / (1024 * 1024));
+#ifdef VITA
+	free(a3000_mem);
+#else
     munmap(a3000_mem, a3000_totalsize);
+#endif
     a3000_mem = (uae_u8*) MAP_FAILED;
     a3000_totalsize = 0;
     lastLowSize = 0;
@@ -185,8 +223,12 @@ bool HandleA3000Mem(int lowsize, int highsize)
     write_log("Try to get A3000 memory at correct place (0x%08x). %d MB and %d MB.\n", A3000MEM_START, 
       lowsize / (1024 * 1024), highsize / (1024 * 1024));
     a3000_totalsize = lowsize + highsize;
+#ifndef VITA
     a3000_mem = (uae_u8*) mmap(regs.natmem_offset + (A3000MEM_START - lowsize), a3000_totalsize,
       PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED, -1, 0);
+#else
+	a3000_mem = (uae_u8*)malloc(a3000_totalsize);
+#endif
     if(a3000_mem != MAP_FAILED)
     {
       lastLowSize = lowsize;

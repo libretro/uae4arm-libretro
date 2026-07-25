@@ -23,7 +23,10 @@
 #include <android/log.h>
 #endif
 
+#ifndef VITA
 #include <linux/fb.h>
+#endif
+
 #include <sys/ioctl.h>
 
 #ifndef OMAPFB_WAITFORVSYNC

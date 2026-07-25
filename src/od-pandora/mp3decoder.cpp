@@ -38,6 +38,9 @@ mp3decoder::mp3decoder()
 
 uae_u8 *mp3decoder::get (struct zfile *zf, uae_u8 *outbuf, int maxsize) 
 {
+#ifdef VITA
+	return NULL;
+#else
 	int outoffset = 0;
 	unsigned char mp3buf[MP3_BLOCK_SIZE];
   unsigned char rawbuf[RAW_BLOCK_SIZE];
@@ -104,6 +107,7 @@ uae_u8 *mp3decoder::get (struct zfile *zf, uae_u8 *outbuf, int maxsize)
   mpg123_exit();
     
   return outbuf;
+#endif
 }
 
 uae_u32 mp3decoder::getsize (struct zfile *zf) 

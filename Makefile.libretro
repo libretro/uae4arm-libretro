@@ -179,6 +179,26 @@ else ifeq ($(platform), android)
 	LDFLAGS := -lz -lm -llog
 	SHARED :=  -Wl,--fix-cortex-a8 -shared -Wl,--version-script=$(CORE_DIR)/libretro/link.T -Wl,--no-undefined
 	PLATFLAGS += -DANDROID -DRETRO -DAND -DANDPORT -DARM_OPT_TEST=1
+# Sony Ps vita
+else ifeq ($(platform), vita)
+	TARGET := $(TARGET_NAME)_libretro_vita.a
+	CC = arm-vita-eabi-gcc
+	CXX = arm-vita-eabi-g++
+	AR = arm-vita-eabi-ar
+	PLATFLAGS += -marm -mfpu=neon -mtune=cortex-a9 -mfloat-abi=hard -ffast-math
+	PLATFLAGS += -fno-asynchronous-unwind-tables -funroll-loops
+	PLATFLAGS += -mword-relocations -fno-unwind-tables -fno-optimize-sibling-calls
+	PLATFLAGS += -mvectorize-with-neon-quad -funsafe-math-optimizations
+	PLATFLAGS += -mlittle-endian -munaligned-access
+	PLATFLAGS += -D__arm__ -DVITA
+	HAVE_NEON = 1
+	USE_PICASSO96 = 1
+	PLATFLAGS += -U__INT32_TYPE__ -U __UINT32_TYPE__ -D__INT32_TYPE__=int
+	PLATFLAGS += -DHAVE_STRTOUL -DVITA
+	CFLAGS += $(PLATFLAGS)
+	CXXFLAGS += $(PLATFLAGS)
+	STATIC_LINKING = 1
+	LDFLAGS := -lz -lpthread -lFLAC -lmpg123
 endif
 
 # webOS
@@ -242,8 +262,13 @@ CAPS = capsimg.so
 capsimg.so: capsimg
 	(cd capsimg ; ./bootstrap ; ./configure --host=arm ; $(MAKE) ; cp capsimg.so ../ )
 
+ifeq ($(platform),vita)
+$(TARGET): $(OBJECTS)
+	$(AR) -cr $@ $(OBJECTS)
+else
 $(TARGET): $(OBJECTS) $(CAPS)
 	$(CXX) $(fpic) $(SHARED) $(INCDIRS) -o $@ $(OBJECTS) $(LDFLAGS)
+endif
 
 $(EMU)/od-pandora/neon_helper.o: $(EMU)/od-pandora/neon_helper.s
 	$(CXX) $(ASFLAGS) -Wall -o $(EMU)/od-pandora/neon_helper.o -c $(EMU)/od-pandora/neon_helper.s

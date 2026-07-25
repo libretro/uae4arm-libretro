@@ -28,6 +28,8 @@ void console_out (const TCHAR *format,...)
 
 void write_log (const TCHAR *format,...)
 {
+// For unknown reason it crash in vita. To be reviewed...
+#ifndef VITA
   int count;
   int numwritten;
   TCHAR buffer[WRITE_LOG_BUF_SIZE];
@@ -40,6 +42,7 @@ void write_log (const TCHAR *format,...)
 	  fflush (debugfile);
   }
   va_end (parms);
+#endif
 }
 
 #endif

@@ -572,4 +572,12 @@ STATIC_INLINE uae_u32 do_byteswap_16(uae_u32 v) {
 #define NOWARN_UNUSED(x) x
 #endif
 
+#ifdef VITA
+#define getcwd(a,b) "ux0:/"
+#include <psp2/types.h>
+#include <psp2/io/dirent.h>
+#include <psp2/kernel/threadmgr.h>
+#define chmod(a, b)
+#endif
+
 #endif /* UAE_SYSDEPS_H */
