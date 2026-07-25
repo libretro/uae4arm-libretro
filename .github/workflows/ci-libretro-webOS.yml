@@ -1,0 +1,40 @@
+name: CI libretro build webOS
+
+on:
+  push:
+    branches:
+      - '*'
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check Out Repo
+        uses: actions/checkout@v7
+
+      - name: Update packages
+        run: sudo apt-get -yq update
+
+      - name: Download webOS (arm) NDK
+        uses: robinraju/release-downloader@v1
+        with:
+          repository: "openlgtv/buildroot-nc4"
+          latest: true
+          fileName: "arm-webos-linux-gnueabi_sdk-buildroot-x86_64.tar.gz"
+          out-file-path: "/tmp"
+
+      - name: Extract webOS NDKs
+        shell: bash
+        working-directory: /tmp
+        run: |
+          tar xzf arm-webos-linux-gnueabi_sdk-buildroot-x86_64.tar.gz
+          ./arm-webos-linux-gnueabi_sdk-buildroot/relocate-sdk.sh
+
+      - name: Compile
+        shell: bash
+        run: |
+          . /tmp/arm-webos-linux-gnueabi_sdk-buildroot/environment-setup
+          export SDK_PATH=/tmp/arm-webos-linux-gnueabi_sdk-buildroot
+          make -f Makefile.libretro -j$(getconf _NPROCESSORS_ONLN)

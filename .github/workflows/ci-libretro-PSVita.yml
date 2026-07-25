@@ -1,0 +1,21 @@
+name: CI libretro build PSVita
+
+on:
+  push:
+  pull_request:
+  repository_dispatch:
+    types: [run_build]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container:
+      image: reallibretroretroarch/libretro-build-vita:latest
+      options: --user root
+
+    steps:
+    - uses: actions/checkout@v7
+
+    - name: Compile
+      run: |
+        make -f Makefile.libretro platform=vita -j$(getconf _NPROCESSORS_ONLN)

@@ -1,0 +1,46 @@
+# DESCRIPTION: GitLab CI/CD for libRetro (NOT FOR GitLab-proper)
+
+##############################################################################
+################################# BOILERPLATE ################################
+##############################################################################
+
+# Core definitions
+.core-defs:
+  variables:
+    JNI_PATH: .
+    CORENAME: uae4arm
+    MAKEFILE: Makefile.libretro
+
+# Inclusion templates, required for the build to work
+include:
+  ################################## CONSOLES ################################
+  # PlayStation Vita
+  - project: 'libretro-infrastructure/ci-templates'
+    file: '/vita-static.yml'
+
+  # webOS 32-bit (LGTV)
+  - project: 'libretro-infrastructure/ci-templates'
+    file: '/webos-make.yml'
+
+# Stages for building
+stages:
+  - build-prepare
+  - build-shared
+  - build-static
+
+##############################################################################
+#################################### STAGES ##################################
+##############################################################################
+#
+################################### CONSOLES #################################
+# PlayStation Vita
+libretro-build-vita:
+  extends:
+    - .libretro-vita-static-retroarch-master
+    - .core-defs
+
+# webOS 32-bit
+libretro-build-webos-armv7a:
+  extends:
+    - .libretro-webos-armv7a-make-default
+    - .core-defs
