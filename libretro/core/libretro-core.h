@@ -82,4 +82,14 @@ extern void update_prefs_retrocfg(struct uae_prefs *);
 #endif
 #define uint32 unsigned int
 #define uint8 unsigned char
+
+/* Framebuffer the emulator core rasterises into. */
+typedef struct retro_surface {
+	int w;
+	int h;
+	int pitch;
+	unsigned char *pixels;
+} retro_surface_t;
+
+extern retro_surface_t *retro_screen_surface;
 #endif

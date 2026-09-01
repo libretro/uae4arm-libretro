@@ -36,25 +36,15 @@
 #include "lha_macro.h"
 
 struct encode_option {
-#if 1 || defined(__STDC__) || defined(AIX)
 	void            (*output) ();
 	void            (*encode_start) ();
 	void            (*encode_end) ();
-#else
-	int             (*output) ();
-	int             (*encode_start) ();
-	int             (*encode_end) ();
-#endif
 };
 
 struct decode_option {
 	unsigned short  (*decode_c) ();
 	unsigned short  (*decode_p) ();
-#if 1 || defined(__STDC__) || defined(AIX)
 	void            (*decode_start) ();
-#else
-	int             (*decode_start) ();
-#endif
 };
 
 /* ------------------------------------------------------------------------ */

@@ -22,7 +22,7 @@
 #include "savestate.h"
 #include "cdtv.h"
 #include "zfile.h"
-#include "td-sdl/thread.h"
+#include "threaddep/thread.h"
 #include "gfxboard.h"
 #include "cd32_fmv.h"
 #include "gayle.h"

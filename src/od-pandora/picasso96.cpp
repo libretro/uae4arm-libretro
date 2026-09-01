@@ -51,7 +51,7 @@
 
 #include "config.h"
 #include "options.h"
-#include "td-sdl/thread.h"
+#include "threaddep/thread.h"
 #include "memory.h"
 #include "custom.h"
 #include "newcpu.h"
@@ -61,7 +61,6 @@
 #include "traps.h"
 #include "native2amiga.h"
 #include "picasso96.h"
-#include <SDL.h>
 
 #define NOBLITTER 0
 #define NOBLITTER_BLIT 0

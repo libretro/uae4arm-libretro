@@ -4,7 +4,6 @@
 #include "options.h"
 #include "keyboard.h"
 #include "inputdevice.h"
-#include "SDL.h"
 
 
 static int joyXviaCustom = 0;
@@ -45,17 +44,10 @@ static int get_mouse_num (void)
 
 static TCHAR *get_mouse_friendlyname (int mouse)
 {
-#ifdef __LIBRETRO__
   if(mouse == 0)
     return "Libretro mouse 0";
   else
     return "Libretro mouse 1";
-#else
-  if(mouse == 0)
-    return "Nubs as mouse";
-  else
-    return "dPad as mouse";
-#endif
 }
 
 static TCHAR *get_mouse_uniquename (int mouse)
@@ -106,37 +98,6 @@ static int get_mouse_widget_type (int mouse, int num, TCHAR *name, uae_u32 *code
 
 static void read_mouse (void) 
 {
-#ifndef __LIBRETRO__
-  if(currprefs.input_tablet > TABLET_OFF) {
-    // Mousehack active
-    int x, y;
-    SDL_GetMouseState(&x, &y);
-	  setmousestate(0, 0, x, 1);
-	  setmousestate(0, 1, y, 1);
-  }
-  
-  if(currprefs.jports[0].id == JSEM_MICE + 1 || currprefs.jports[1].id == JSEM_MICE + 1) {
-    // dPad is mouse
-  	Uint8 *keystate = SDL_GetKeyState(NULL);
-    int mouseScale = currprefs.input_joymouse_multiplier / 4;
-    
-    if(keystate[VK_LEFT])
-      setmousestate(1, 0, -mouseScale, 0);
-    if(keystate[VK_RIGHT])
-      setmousestate(1, 0, mouseScale, 0);
-    if(keystate[VK_UP])
-      setmousestate(1, 1, -mouseScale, 0);
-    if(keystate[VK_DOWN])
-      setmousestate(1, 1, mouseScale, 0);
-    
-    if(!mouseBut1viaCustom)
-      setmousebuttonstate (1, 0, keystate[VK_A]); // A button -> left mouse
-    if(!mouseBut2viaCustom)
-      setmousebuttonstate (1, 1, keystate[VK_B]); // B button -> right mouse
-  } 
-   
-  // Nubs as mouse handled in handle_msgpump()
-#endif
 }
 
 
@@ -269,61 +230,20 @@ static char JoystickName[MAX_INPUT_DEVICES][80];
 
 static char IsPS3Controller[MAX_INPUT_DEVICES];
 
-#ifndef __LIBRETRO__
-static SDL_Joystick* Joysticktable[MAX_INPUT_DEVICES];
-#endif
 
 
 static int get_joystick_num (void)
 {
-#ifdef __LIBRETRO__
   return 2;
-#else
-  // Keep joystick 0 as Pandora implementation...
-  return (nr_joysticks + 1);
-#endif
 }
 
 static int init_joystick (void)
 {
-#ifndef __LIBRETRO__
-  //This function is called too many times... we can filter if number of joy is good...
-  if (nr_joysticks == SDL_NumJoysticks ())
-    return 1;
-
-  nr_joysticks = SDL_NumJoysticks ();
-  if (nr_joysticks > MAX_INPUT_DEVICES)
-    nr_joysticks = MAX_INPUT_DEVICES;
-  for (int cpt = 0; cpt < nr_joysticks; cpt++)
-  {
-    Joysticktable[cpt] = SDL_JoystickOpen (cpt);
-    strncpy(JoystickName[cpt],SDL_JoystickName(cpt), sizeof JoystickName[cpt] - 1);
-    printf("Joystick %i : %s\n",cpt,JoystickName[cpt]);
-    printf("    Axis      : %i\n",SDL_JoystickNumAxes(Joysticktable[cpt]));
-    printf("    Hats/DPads: %i\n",SDL_JoystickNumHats(Joysticktable[cpt]));
-    printf("    Buttons   : %i\n",SDL_JoystickNumButtons(Joysticktable[cpt]));
-
-    if (strcmp(JoystickName[cpt],"Sony PLAYSTATION(R)3 Controller") == 0 ||
-            strcmp(JoystickName[cpt],"PLAYSTATION(R)3 Controller") == 0)
-    {
-      printf("    Found a dualshock controller: Activating workaround.\n");
-      IsPS3Controller[cpt] = 1;
-    }
-    else
-      IsPS3Controller[cpt] = 0;
-  }
-#endif
   return 1;
 }
 
 static void close_joystick (void)
 {
-#ifndef __LIBRETRO__
-  for (int cpt = 0; cpt < nr_joysticks; cpt++)
-  {
-	SDL_JoystickClose (Joysticktable[cpt]);
-  }
-#endif
 }
 
 
@@ -338,17 +258,10 @@ static void unacquire_joystick (int num)
 
 static TCHAR *get_joystick_friendlyname (int joy)
 {
-#ifdef __LIBRETRO__
   if (joy == 0) 
     return "Libretro Joystick 0";
   else
     return "Libretro Joystick 1";
-#else
-  if (joy == 0) 
-    return "dPad as joystick";
-  else
-    return JoystickName[joy - 1];
-#endif
 }
 
 static TCHAR *get_joystick_uniquename (int joy)
@@ -442,100 +355,6 @@ static int get_joystick_flags (int num)
 
 static void read_joystick (void)
 {
-#ifndef __LIBRETRO__
-  for (int joyid = 0; joyid < MAX_JPORTS ; joyid ++)
-  // First handle fake joystick from pandora...
-  if(currprefs.jports[joyid].id == JSEM_JOYS)
-  {
-  	Uint8 *keystate = SDL_GetKeyState(NULL);
-    
-    if(!keystate[VK_R])
-    { // Right shoulder + dPad -> cursor keys
-      int axis = (keystate[VK_LEFT] ? -32767 : (keystate[VK_RIGHT] ? 32767 : 0));
-      if(!joyXviaCustom)
-        setjoystickstate (0, 0, axis, 32767);
-      axis = (keystate[VK_UP] ? -32767 : (keystate[VK_DOWN] ? 32767 : 0));
-      if(!joyYviaCustom)
-        setjoystickstate (0, 1, axis, 32767);
-    }
-    if(!joyButXviaCustom[0])
-      setjoybuttonstate (0, 0, keystate[VK_X]);
-    if(!joyButXviaCustom[1])
-      setjoybuttonstate (0, 1, keystate[VK_B]);
-    if(!joyButXviaCustom[2])
-      setjoybuttonstate (0, 2, keystate[VK_A]);
-    if(!joyButXviaCustom[3])
-      setjoybuttonstate (0, 3, keystate[VK_Y]);
-
-    int cd32_start = 0, cd32_ffw = 0, cd32_rwd = 0;
-    if(keystate[SDLK_LALT]) { // Pandora Start button
-      if(keystate[VK_L])  // Left shoulder
-        cd32_rwd = 1;
-      else if (keystate[VK_R]) // Right shoulder
-        cd32_ffw = 1;
-      else
-        cd32_start = 1;
-    }
-    if(!joyButXviaCustom[6])
-      setjoybuttonstate (0, 6, cd32_start);
-    if(!joyButXviaCustom[5])
-      setjoybuttonstate (0, 5, cd32_ffw);
-    if(!joyButXviaCustom[4])
-      setjoybuttonstate (0, 4, cd32_rwd);
-  }
-  else if (jsem_isjoy(joyid,&currprefs) != -1)
-    {
-      // Now we handle real SDL joystick...
-      int hostjoyid = currprefs.jports[joyid].id - JSEM_JOYS -1;
-      int hat = SDL_JoystickGetHat(Joysticktable[hostjoyid],0);
-      int val = SDL_JoystickGetAxis(Joysticktable[hostjoyid], 0);
-
-      if (hat & SDL_HAT_RIGHT)
-        setjoystickstate (hostjoyid + 1, 0, 32767, 32767);
-      else 
-      if (hat & SDL_HAT_LEFT)
-        setjoystickstate (hostjoyid + 1, 0, -32767, 32767);
-      else
-        setjoystickstate (hostjoyid + 1, 0, val, 32767);
-      val = SDL_JoystickGetAxis(Joysticktable[hostjoyid], 1);
-      if (hat & SDL_HAT_UP)
-         setjoystickstate (hostjoyid + 1, 1, -32767, 32767);
-      else
-      if (hat & SDL_HAT_DOWN) 
-         setjoystickstate (hostjoyid + 1, 1, 32767, 32767);
-      else
-         setjoystickstate (hostjoyid + 1, 1, val, 32767);
-
-      setjoybuttonstate (hostjoyid + 1, 0, (SDL_JoystickGetButton(Joysticktable[hostjoyid], 0) & 1) );
-      setjoybuttonstate (hostjoyid + 1, 1, (SDL_JoystickGetButton(Joysticktable[hostjoyid], 1) & 1) );
-      setjoybuttonstate (hostjoyid + 1, 2, (SDL_JoystickGetButton(Joysticktable[hostjoyid], 2) & 1) );
-      setjoybuttonstate (hostjoyid + 1, 3, (SDL_JoystickGetButton(Joysticktable[hostjoyid], 3) & 1) );
-
-      // cd32 start, ffw, rwd
-      setjoybuttonstate (hostjoyid + 1, 4, (SDL_JoystickGetButton(Joysticktable[hostjoyid], 4) & 1) );
-      setjoybuttonstate (hostjoyid + 1, 5, (SDL_JoystickGetButton(Joysticktable[hostjoyid], 5) & 1) );
-      setjoybuttonstate (hostjoyid + 1, 6, (SDL_JoystickGetButton(Joysticktable[hostjoyid], 6) & 1) );
-
-      if (IsPS3Controller[hostjoyid])
-      {
-        setjoybuttonstate (hostjoyid + 1, 0, (SDL_JoystickGetButton(Joysticktable[hostjoyid], 13) & 1) );
-        setjoybuttonstate (hostjoyid + 1, 1, (SDL_JoystickGetButton(Joysticktable[hostjoyid], 14) & 1) );
-
-        // Simulate a top with button 4
-        if ( SDL_JoystickGetButton(Joysticktable[hostjoyid], 4))
-           setjoystickstate (hostjoyid + 1, 1, -32767, 32767);
-        // Simulate a right with button 5
-        if ( SDL_JoystickGetButton(Joysticktable[hostjoyid], 5))
-           setjoystickstate (hostjoyid + 1, 0, 32767, 32767);
-        // Simulate a bottom with button 6
-        if ( SDL_JoystickGetButton(Joysticktable[hostjoyid], 6))
-           setjoystickstate (hostjoyid + 1, 1, 32767, 32767);
-        // Simulate a left with button 7
-        if ( SDL_JoystickGetButton(Joysticktable[hostjoyid], 7))
-           setjoystickstate (hostjoyid + 1, 0, -32767, 32767);
-      }
-    }
-#endif
 }
 
 struct inputdevice_functions inputdevicefunc_joystick = {

@@ -13,12 +13,7 @@
 #include "keybuf.h"
 #include "gui.h"
 
-#ifdef __LIBRETRO__
 #include "libretro.h"
-#include "SDL.h"
-#else
-#include <SDL.h>
-#endif
 
 char keyboard_type = 0;
 
@@ -272,7 +267,6 @@ static struct uae_input_device_kbr_default keytrans_amiga_fbcon[] = {
 	{ -1, 0 }
   };
 
-#ifdef __LIBRETRO__
 
 static struct uae_input_device_kbr_default keytrans_amiga[] = {
 
@@ -337,72 +331,6 @@ static struct uae_input_device_kbr_default keytrans_amiga[] = {
 };
 
 
-#else
-
-static struct uae_input_device_kbr_default keytrans_amiga[] = {
-
-	{ SDLK_a, INPUTEVENT_KEY_A },
-	{ SDLK_b, INPUTEVENT_KEY_B },
-	{ SDLK_c, INPUTEVENT_KEY_C },
-	{ SDLK_d, INPUTEVENT_KEY_D },
-	{ SDLK_e, INPUTEVENT_KEY_E },
-	{ SDLK_f, INPUTEVENT_KEY_F },
-	{ SDLK_g, INPUTEVENT_KEY_G },
-	{ SDLK_h, INPUTEVENT_KEY_H },
-	{ SDLK_i, INPUTEVENT_KEY_I },
-	{ SDLK_j, INPUTEVENT_KEY_J },
-	{ SDLK_k, INPUTEVENT_KEY_K },
-	{ SDLK_l, INPUTEVENT_KEY_L },
-	{ SDLK_m, INPUTEVENT_KEY_M },
-	{ SDLK_n, INPUTEVENT_KEY_N },
-	{ SDLK_o, INPUTEVENT_KEY_O },
-	{ SDLK_p, INPUTEVENT_KEY_P },
-	{ SDLK_q, INPUTEVENT_KEY_Q },
-	{ SDLK_r, INPUTEVENT_KEY_R },
-	{ SDLK_s, INPUTEVENT_KEY_S },
-	{ SDLK_t, INPUTEVENT_KEY_T },
-	{ SDLK_u, INPUTEVENT_KEY_U },
-	{ SDLK_v, INPUTEVENT_KEY_V },
-	{ SDLK_w, INPUTEVENT_KEY_W },
-	{ SDLK_x, INPUTEVENT_KEY_X },
-	{ SDLK_y, INPUTEVENT_KEY_Y },
-	{ SDLK_z, INPUTEVENT_KEY_Z },
-
-	{ SDLK_0, INPUTEVENT_KEY_0 },
-	{ SDLK_1, INPUTEVENT_KEY_1 },
-	{ SDLK_2, INPUTEVENT_KEY_2 },
-	{ SDLK_3, INPUTEVENT_KEY_3 },
-	{ SDLK_4, INPUTEVENT_KEY_4 },
-	{ SDLK_5, INPUTEVENT_KEY_5 },
-	{ SDLK_6, INPUTEVENT_KEY_6 },
-	{ SDLK_7, INPUTEVENT_KEY_7 },
-	{ SDLK_8, INPUTEVENT_KEY_8 },
-	{ SDLK_9, INPUTEVENT_KEY_9 },
-
-  { SDLK_BACKSPACE, INPUTEVENT_KEY_BACKSPACE },
-	{ SDLK_TAB, INPUTEVENT_KEY_TAB },
-	{ SDLK_RETURN, INPUTEVENT_KEY_RETURN },
-	{ VK_ESCAPE, INPUTEVENT_KEY_ESC },
-	{ SDLK_SPACE, INPUTEVENT_KEY_SPACE },
-	{ SDLK_QUOTE, INPUTEVENT_KEY_SINGLEQUOTE },
-	{ SDLK_COMMA, INPUTEVENT_KEY_COMMA },
-	{ SDLK_MINUS, INPUTEVENT_KEY_SUB },
-	{ SDLK_PERIOD, INPUTEVENT_KEY_PERIOD },
-	{ SDLK_SLASH, INPUTEVENT_KEY_DIV },
-
-	{ SDLK_SEMICOLON, INPUTEVENT_KEY_SEMICOLON },
-  { SDLK_EQUALS, INPUTEVENT_KEY_EQUALS },
-	{ SDLK_LEFTBRACKET, INPUTEVENT_KEY_LEFTBRACKET },
-	{ SDLK_BACKSLASH, INPUTEVENT_KEY_BACKSLASH },
-	{ SDLK_RIGHTBRACKET, INPUTEVENT_KEY_RIGHTBRACKET },
-  { SDLK_BACKQUOTE, INPUTEVENT_KEY_BACKQUOTE },
-  { SDLK_DELETE, INPUTEVENT_KEY_DEL },
-
-  { -1, 0 }
-};
-
-
-#endif
 
 static struct uae_input_device_kbr_default *keytrans[] = {
 	keytrans_amiga,
@@ -432,21 +360,6 @@ static int *kbmaps[] = { kb_none, kb_none, kb_none, kb_none, kb_none,
 void keyboard_settrans (void)
 {
   char vid_drv_name[32];
-#ifndef __LIBRETRO__
-  // get display type...
-  SDL_VideoDriverName(vid_drv_name, sizeof(vid_drv_name));
-  if (strcmp(vid_drv_name, "x11") == 0)
-  {
-    printf("Will use keycode from x11 mapping.\n");
-    keyboard_type = KEYCODE_X11;
-    inputdevice_setkeytranslation (keytrans_x11, kbmaps);
-  } else  if (strcmp(vid_drv_name, "fbcon") == 0)
-  {
-    printf("Will use keycode from fbcon mapping.\n");
-    keyboard_type = KEYCODE_FBCON;
-    inputdevice_setkeytranslation (keytrans_fbcon, kbmaps);
-  } else
-#endif
   {
     printf("Unknown keycode to use, will use keysym\n");
     keyboard_type = KEYCODE_UNK;
@@ -457,197 +370,5 @@ void keyboard_settrans (void)
 
 int translate_pandora_keys(int symbol, int *modifier)
 {
-#ifdef PANDORA_SPECIFIC
-  switch(symbol)
-  {
-    case VK_UP:
-      if(*modifier == KMOD_RCTRL) { // Right shoulder + dPad -> cursor keys
-        *modifier = KMOD_NONE;
-        return AK_UP;
-      }
-      break;
-      
-    case VK_DOWN:
-      if(*modifier == KMOD_RCTRL) { // Right shoulder + dPad -> cursor keys
-        *modifier = KMOD_NONE;
-        return AK_DN;
-      }
-      break;
-
-    case VK_LEFT:
-      if(*modifier == KMOD_RCTRL) { // Right shoulder + dPad -> cursor keys
-        *modifier = KMOD_NONE;
-        return AK_LF;
-      }
-      break;
-
-    case VK_RIGHT:
-      if(*modifier == KMOD_RCTRL) { // Right shoulder + dPad -> cursor keys
-        *modifier = KMOD_NONE;
-        return AK_RT;
-      }
-      break;
-
-    case VK_A:
-      if(*modifier == KMOD_RCTRL) { // Right shoulder + button A -> CTRL
-        *modifier = KMOD_NONE;
-        return AK_CTRL;
-      }
-      break;
-
-    case VK_B:
-      if(*modifier == KMOD_RCTRL) { // Right shoulder + button B -> left ALT
-        *modifier = KMOD_NONE;
-        return AK_LALT;
-      }
-      break;
-
-    case VK_X:
-      if(*modifier == KMOD_RCTRL) { // Right shoulder + button X -> HELP
-        *modifier = KMOD_NONE;
-        return AK_HELP;
-      }
-      break;
-
-    case VK_Y: // button Y -> Space
-      *modifier = KMOD_NONE;
-      return AK_SPC;
-
-    case SDLK_F1:
-      *modifier = KMOD_NONE;
-      return AK_F1;
-      
-    case SDLK_F2:
-      *modifier = KMOD_NONE;
-      return AK_F2;
-      
-    case SDLK_F3:
-      *modifier = KMOD_NONE;
-      return AK_F3;
-      
-    case SDLK_F4:
-      *modifier = KMOD_NONE;
-      return AK_F4;
-      
-    case SDLK_F5:
-      *modifier = KMOD_NONE;
-      return AK_F5;
-      
-    case SDLK_F6:
-      *modifier = KMOD_NONE;
-      return AK_F6;
-      
-    case SDLK_F7:
-      *modifier = KMOD_NONE;
-      return AK_F7;
-      
-    case SDLK_F8:
-      *modifier = KMOD_NONE;
-      return AK_F8;
-      
-    case SDLK_F9:
-      *modifier = KMOD_NONE;
-      return AK_F9;
-      
-    case SDLK_F10:
-      *modifier = KMOD_NONE;
-      return AK_F10;
-      
-    case SDLK_EXCLAIM:
-      *modifier = KMOD_SHIFT;
-      return AK_1;
-
-    case SDLK_QUOTEDBL:
-      *modifier = KMOD_SHIFT;
-      return AK_QUOTE;
-
-    case SDLK_HASH:
-      *modifier = KMOD_SHIFT;
-      return AK_3;
-
-    case SDLK_DOLLAR:
-      *modifier = KMOD_SHIFT;
-      return AK_4;
-
-    case SDLK_AMPERSAND:
-      *modifier = KMOD_SHIFT;
-      return AK_7;
-
-    case SDLK_LEFTPAREN:
-      *modifier = KMOD_SHIFT;
-      return AK_9;
-
-    case SDLK_RIGHTPAREN:
-      *modifier = KMOD_SHIFT;
-      return AK_0;
-
-    case SDLK_ASTERISK:
-      *modifier = KMOD_SHIFT;
-      return AK_8;
-
-    case SDLK_PLUS:
-      *modifier = KMOD_SHIFT;
-      return AK_EQUAL;
-
-    case SDLK_COLON:
-      *modifier = KMOD_SHIFT;
-      return AK_SEMICOLON;
-
-    case SDLK_QUESTION:
-      *modifier = KMOD_SHIFT;
-      return AK_SLASH;
-
-    case SDLK_AT:
-      *modifier = KMOD_SHIFT;
-      return AK_2;
-
-    case SDLK_CARET:
-      *modifier = KMOD_SHIFT;
-      return AK_6;
-
-    case SDLK_UNDERSCORE:
-      *modifier = KMOD_SHIFT;
-      return AK_MINUS;
-          
-    case 124: // code for '|'
-      *modifier = KMOD_SHIFT;
-      return AK_BACKSLASH;
-
-    case SDLK_2:
-      if(*modifier == KMOD_LSHIFT) { // '{'
-        *modifier = KMOD_SHIFT;
-        return AK_LBRACKET;
-      }
-      break;
-      
-    case SDLK_3:
-      if(*modifier == KMOD_LSHIFT) { // '}'
-        *modifier = KMOD_SHIFT;
-        return AK_RBRACKET;
-      }
-      break;
-      
-    case SDLK_4:
-      if(*modifier == KMOD_LSHIFT) { // '~'
-        *modifier = KMOD_SHIFT;
-        return AK_BACKQUOTE;
-      }
-      break;
-
-    case SDLK_9:
-      if(*modifier == KMOD_LSHIFT) { // '['
-        *modifier = KMOD_NONE;
-        return AK_LBRACKET;
-      }
-      break;
-
-    case SDLK_0:
-      if(*modifier == KMOD_LSHIFT) { // ']'
-        *modifier = KMOD_NONE;
-        return AK_RBRACKET;
-      }
-      break;
-  }
-#endif
   return 0;
 }

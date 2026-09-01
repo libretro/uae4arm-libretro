@@ -28,7 +28,6 @@ unsigned char *too_flag;
 
 #if 0
 static struct encode_option encode_define[2] = {
-#if 1 || defined(__STDC__) || defined(AIX)
 	/* lh1 */
 	{(void (*) ()) output_dyn,
 		(void (*) ()) encode_start_fix,
@@ -37,16 +36,6 @@ static struct encode_option encode_define[2] = {
 	{(void (*) ()) output_st1,
 		(void (*) ()) encode_start_st1,
 	(void (*) ()) encode_end_st1}
-#else
-	/* lh1 */
-	{(int (*) ()) output_dyn,
-		(int (*) ()) encode_start_fix,
-	(int (*) ()) encode_end_dyn},
-	/* lh4, 5,6 */
-	{(int (*) ()) output_st1,
-		(int (*) ()) encode_start_st1,
-	(int (*) ()) encode_end_st1}
-#endif
 };
 #endif
 

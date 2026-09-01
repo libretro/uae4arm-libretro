@@ -41,7 +41,6 @@
 #include "custom.h"
 #include "comptbl.h"
 #include "compemu.h"
-#include <SDL.h>
 
 #include "compemu_prefs.cpp"
 
@@ -63,7 +62,6 @@
 #undef abort
 #define abort() do { \
   fprintf(stderr, "Abort in file %s at line %d\n", __FILE__, __LINE__); \
-  SDL_Quit();  \
   exit(EXIT_FAILURE); \
 } while (0)
 #endif

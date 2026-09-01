@@ -11,11 +11,11 @@
 #include <assert.h>
 
 #include "options.h"
-#include "td-sdl/thread.h"
+#include "threaddep/thread.h"
 #include "uae.h"
 #include "gensound.h"
 #include "audio.h"
-#include "sd-pandora/sound.h"
+#include "sd-retro/sound.h"
 
 #include "memory.h"
 #include "custom.h"
@@ -36,19 +36,8 @@
 #include "devices.h"
 #include "jit/compemu.h"
 
-#if defined(USE_SDL) || defined(__LIBRETRO__)
-#include "SDL.h"
-#endif
 
-#if defined(__LIBRETRO__)
 #include "libretro-core.h"
-#endif
-#ifdef CAPSLOCK_DEBIAN_WORKAROUND
-  #include <linux/kd.h>
-  #include <sys/ioctl.h>
-  #include "keyboard.h"
-
-#endif
 
 uae_s32 version = 256*65536L*UAEMAJOR + 65536L*UAEMINOR + UAESUBREV;
 
@@ -634,23 +623,11 @@ void do_start_program (void)
   if (quit_program >= 0)
 	  quit_program = UAE_RESET;
 	m68k_go (1);
-#if defined(__LIBRETRO__)
   pauseg=-1;
-#endif
 }
 
 void start_program (void)
 {
-  #ifdef CAPSLOCK_DEBIAN_WORKAROUND
-    char kbd_flags;
-    // set capslock state based upon current "real" state
-    ioctl(0, KDGKBLED, &kbd_flags);
-    if ((kbd_flags & 07) & LED_CAP)
-    {
-       // record capslock pressed
-       inputdevice_do_keyboard(AK_CAPSLOCK, 1);
-    }
-  #endif
     do_start_program ();
 }
 
@@ -671,24 +648,15 @@ static int real_main2 (int argc, TCHAR **argv)
 
   printf("Git revision: %s\n",git_version);
 #endif
-#ifdef PANDORA_SPECIFIC
-  SDL_Init(SDL_INIT_NOPARACHUTE | SDL_INIT_VIDEO);
-#else 
-#ifdef USE_SDL
-  SDL_Init(SDL_INIT_NOPARACHUTE | SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_JOYSTICK);
-#endif
 
   tmp_prefs=changed_prefs;
 
-#endif
   set_config_changed ();
  
   keyboard_settrans();
   if (restart_config[0]) {
 	  default_prefs (&currprefs, true, 0);
-#ifdef __LIBRETRO__
 	  update_prefs_retrocfg(&currprefs);
-#endif
 	  fixup_prefs (&currprefs, true);
   }
 
@@ -796,9 +764,6 @@ void real_main (int argc, TCHAR **argv)
 	default_config = 1;
 
   while (restart_program) {
-#ifndef __LIBRETRO__
-	  changed_prefs = currprefs;
-#endif
 	  real_main2 (argc, argv);
     leave_program ();
 	  quit_program = 0;

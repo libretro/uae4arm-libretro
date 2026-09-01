@@ -23,7 +23,7 @@
 #include "config.h"
 #include "uae.h"
 #include "options.h"
-#include "td-sdl/thread.h"
+#include "threaddep/thread.h"
 #include "gui.h"
 #include "memory.h"
 #include "inputdevice.h"
@@ -34,8 +34,6 @@
 #include "rommgr.h"
 #include "zfile.h"
 #include "gfxboard.h"
-#include <SDL.h>
-#include "pandora_rp9.h"
 
 // Temporary reintroduce reinit_amiga
 #include "newcpu.h"
@@ -84,16 +82,10 @@ static int doStylusRightClick;
 extern void SetLastActiveConfig(const char *filename);
 
 /* Keyboard */
-int customControlMap[SDLK_LAST];
+int customControlMap[RETROK_LAST];
 
 char start_path_data[MAX_DPATH];
 char currentDir[MAX_DPATH];
-#ifdef CAPSLOCK_DEBIAN_WORKAROUND
-  #include <linux/kd.h>
-  #include <sys/ioctl.h>
-  unsigned char kbd_led_status;
-  char kbd_flags;
-#endif
 
 static char config_path[MAX_DPATH];
 static char rom_path[MAX_DPATH];
@@ -107,14 +99,12 @@ int defaultCpuSpeed = 600;
 int max_uae_width;
 int max_uae_height;
 
-#ifdef __LIBRETRO__
 #include "core-log.h"
 #include "libco/libco.h"
 
 extern cothread_t mainThread;
 extern cothread_t emuThread;
 extern const char *retro_system_directory;
-#endif
 
 extern "C" int main( int argc, char *argv[] );
 
@@ -508,22 +498,8 @@ int target_cfgfile_load (struct uae_prefs *p, const char *filename, int type, in
   write_log(_T("target_cfgfile_load(): load file %s\n"), filename);
   
   discard_prefs(p, type);
-#ifndef __LIBRETRO__
-  default_prefs(p, true, 0);
-#endif
   
 	char *ptr;
-#ifdef RP9_SUPPORT
-	ptr = strstr((char *)filename, ".rp9");
-  if(ptr)
-  {
-    // Load rp9 config
-    result = rp9_parse_file(p, filename);
-    if(result)
-      extractFileName(filename, last_loaded_config);
-  }
-  else 
-#endif
 	{
   	ptr = strstr((char *)filename, ".uae");
     if(ptr)
@@ -816,90 +792,24 @@ void loadAdfDir(void)
 int currVSyncRate = 0;
 bool SetVSyncRate(int hz)
 {
-#ifdef PANDORA_SPECIFIC
-	char cmd[64];
-
-  if(currVSyncRate != hz && (hz == 50 || hz == 60))
-  {
-    snprintf((char*)cmd, 64, "sudo /usr/pandora/scripts/op_lcdrate.sh %d", hz);
-    system(cmd);
-    currVSyncRate = hz;
-    return true;
-  }
-#endif
   return false;
 }
 
 void setCpuSpeed()
 {
-#ifdef PANDORA_SPECIFIC
-  char speedCmd[128];
-
-  currprefs.pandora_cpu_speed = changed_prefs.pandora_cpu_speed;
-
-	if(currprefs.pandora_cpu_speed != lastCpuSpeed)
-	{
-		snprintf((char*)speedCmd, 128, "unset DISPLAY; echo y | sudo -n /usr/pandora/scripts/op_cpuspeed.sh %d", currprefs.pandora_cpu_speed);
-		system(speedCmd);
-		lastCpuSpeed = currprefs.pandora_cpu_speed;
-		cpuSpeedChanged = true;
-	}
-	if(changed_prefs.ntscmode != currprefs.ntscmode)
-	{
-		if(changed_prefs.ntscmode)
-			SetVSyncRate(60);
-		else
-			SetVSyncRate(50);
-		fix_apmodes(&changed_prefs);
-	}
-#else
   return;
-#endif
 }
 
 
 int getDefaultCpuSpeed(void)
 {
-#ifdef PANDORA_SPECIFIC
-  int speed = 600;
-  FILE* f = fopen ("/etc/pandora/conf/cpu.conf", "rt");
-  if(f)
-  {
-    char line[128];
-    for(int i=0; i<6; ++i)
-    {
-      fscanf(f, "%s\n", &line);
-      if(strncmp(line, "default:", 8) == 0)
-      {
-        int value = 0;
-        sscanf(line, "default:%d", &value);
-        if(value > 500 && value < 1200)
-        {
-          speed = value;
-        }
-      }
-    }
-    fclose(f);
-  }
-  return speed;
-#else
   return 0;
-#endif
 }
 
 
 void resetCpuSpeed(void)
 {
-#ifdef PANDORA_SPECIFIC
-  if(cpuSpeedChanged)
-  {
-    lastCpuSpeed = defaultCpuSpeed - 10;
-    currprefs.pandora_cpu_speed = changed_prefs.pandora_cpu_speed = defaultCpuSpeed;
-    setCpuSpeed();
-  }
-#else
   return;
-#endif
 }
 
 
@@ -936,11 +846,7 @@ uae_u32 emulib_target_getcpurate (uae_u32 v, uae_u32 *low)
   return 0;
 }
 
-#ifdef __LIBRETRO__
 int skel_main (int argc, char *argv[])
-#else
-int main (int argc, char *argv[])
-#endif
 {
   struct sigaction action;
   
@@ -952,7 +858,6 @@ int main (int argc, char *argv[])
   // Get startup path
 	getcwd(start_path_data, MAX_DPATH);
 
-#ifdef __LIBRETRO__
 #if defined(VITA)
 sprintf(start_path_data,"ux0:/data/retroarch/system/uae4arm\0");
 #elif defined(ANDROID) || defined(__ANDROID__)
@@ -961,11 +866,7 @@ sprintf(start_path_data,"/mnt/sdcard/uae4arm\0");
 sprintf(start_path_data,"%s/uae4arm\0",retro_system_directory);
 #endif
 LOGI("spd(%s)\n",start_path_data);
-#endif
 	loadAdfDir();
-#ifdef RP9_SUPPORT
-  rp9_init();
-#endif
 
   snprintf(savestate_fname, MAX_PATH, "%s/saves/default.ads", start_path_data);
 	logging_init ();
@@ -1012,35 +913,11 @@ LOGI("spd(%s)\n",start_path_data);
 
   alloc_AmigaMem();
   RescanROMs();
-#ifdef CAPSLOCK_DEBIAN_WORKAROUND
-  // set capslock state based upon current "real" state
-  ioctl(0, KDGKBLED, &kbd_flags);
-  ioctl(0, KDGETLED, &kbd_led_status);
-  if ((kbd_flags & 07) & LED_CAP)
-  {
-   // record capslock pressed
-   kbd_led_status |= LED_CAP;
-   inputdevice_do_keyboard(AK_CAPSLOCK, 1);
-  }
-  else
-  {
-   // record capslock as not pressed
-   kbd_led_status &= ~LED_CAP;
-   inputdevice_do_keyboard(AK_CAPSLOCK, 0);
-  }
-  ioctl(0, KDSETLED, kbd_led_status);
-#endif
 
-#ifdef __LIBRETRO__
   co_switch(mainThread);
-#endif
 
   real_main (argc, argv);
 
-#ifdef CAPSLOCK_DEBIAN_WORKAROUND
-  // restore keyboard LEDs to normal state
-  ioctl(0, KDSETLED, 0xFF);
-#endif
 
   ClearAvailableROMList();
   romlist_clear();
@@ -1048,9 +925,6 @@ LOGI("spd(%s)\n",start_path_data);
   free_AmigaMem();
   lstMRUDiskList.clear();
   lstMRUCDList.clear();
-#ifdef RP9_SUPPORT
-  rp9_cleanup();
-#endif
   
   logging_cleanup();
 
@@ -1063,241 +937,6 @@ int handle_msgpump (void)
 	int got = 0;
 
 
-#ifndef __LIBRETRO__
-  SDL_Event rEvent;
-  int keycode;
-  int modifier;
-  int handled = 0;
-  int i;
-  
-  if(delayed_mousebutton) {
-    --delayed_mousebutton;
-    if(delayed_mousebutton == 0)
-      setmousebuttonstate (0, 0, 1);
-  }
-  
-	while (SDL_PollEvent(&rEvent)) {
-		got = 1;
-		
-		switch (rEvent.type)
-		{
-  		case SDL_QUIT:
-  			uae_quit();
-  			break;
-
-		case SDL_JOYBUTTONDOWN:
-			if (currprefs.button_for_menu != -1 && rEvent.jbutton.button == currprefs.button_for_menu)
-				inputdevice_add_inputcode(AKS_ENTERGUI, 1);
-			if (currprefs.button_for_quit != -1 && rEvent.jbutton.button == currprefs.button_for_quit)
-				inputdevice_add_inputcode(AKS_QUIT, 1);
-			break;
-	
-  		case SDL_KEYDOWN:
-
-  		  if (currprefs.key_for_menu != 0 && rEvent.key.keysym.sym == currprefs.key_for_menu)
-  		  	inputdevice_add_inputcode(AKS_ENTERGUI, 1);
-  		  if (currprefs.key_for_quit != 0 && rEvent.key.keysym.sym == currprefs.key_for_quit)
-  		  	inputdevice_add_inputcode(AKS_QUIT, 1);
-#ifdef ACTION_REPLAY
-  		  if(rEvent.key.keysym.sym == currprefs.key_for_cartridge)
-        		      if(currprefs.cartfile[0] != '\0') {
-          		      inputdevice_add_inputcode (AKS_FREEZEBUTTON, 1);
-    				        handled = 1;
-    				      }
-#endif
-
-  		  switch(rEvent.key.keysym.sym)
-  		  {
- 		#ifdef CAPSLOCK_DEBIAN_WORKAROUND
-		case SDLK_CAPSLOCK: // capslock
-		     // Treat CAPSLOCK as a toggle. If on, set off and vice/versa
-                     ioctl(0, KDGKBLED, &kbd_flags);
-                     ioctl(0, KDGETLED, &kbd_led_status);
-                     if ((kbd_flags & 07) & LED_CAP)
-                     {
-                        // On, so turn off
-                        kbd_led_status &= ~LED_CAP;
-                        kbd_flags &= ~LED_CAP;
-                        inputdevice_do_keyboard(AK_CAPSLOCK, 0);
-                     } else {
-                               // Off, so turn on
-                               kbd_led_status |= LED_CAP;
-                               kbd_flags |= LED_CAP;
-                               inputdevice_do_keyboard(AK_CAPSLOCK, 1);
-                            }
-                     ioctl(0, KDSETLED, kbd_led_status);
-                     ioctl(0, KDSKBLED, kbd_flags);
-                     break;
-                 #endif
-
-				  case SDLK_LSHIFT: // Shift key
-				  inputdevice_do_keyboard(AK_LSH, 1);
-				  break;
-            
-				  case VK_L: // Left shoulder button
-				  case VK_R:  // Right shoulder button
-  					if(currprefs.input_tablet > TABLET_OFF) {
-  					  // Holding left or right shoulder button -> stylus does right mousebutton
-  					  doStylusRightClick = 1;
-            }
-            // Fall through...
-            
-  				default:
-  				  if(currprefs.pandora_customControls) {
-  				    keycode = customControlMap[rEvent.key.keysym.sym];
-  				    if(keycode < 0) {
-  				      // Simulate mouse or joystick
-  				      SimulateMouseOrJoy(keycode, 1);
-  				      break;
-  				    }
-  				    else if(keycode > 0) {
-  				      // Send mapped key press
-  				      inputdevice_do_keyboard(keycode, 1);
-  				      break;
-  				    }
-  				  }
-  				  else
-  				  {  
-  				  modifier = rEvent.key.keysym.mod;
-  				  keycode = translate_pandora_keys(rEvent.key.keysym.sym, &modifier);
-  				  if(keycode)
-  				  {
-				      if(modifier == KMOD_SHIFT)
-  				      inputdevice_do_keyboard(AK_LSH, 1);
-  				    else
-  				      inputdevice_do_keyboard(AK_LSH, 0);
-				      inputdevice_do_keyboard(keycode, 1);
-  				  } else {
-				      if (keyboard_type == KEYCODE_UNK)
-				        inputdevice_translatekeycode(0, rEvent.key.keysym.sym, 1);
-				      else
-				        inputdevice_translatekeycode(0, rEvent.key.keysym.scancode, 1);
-
-				    }
-                                  break;
-                                  }
-				}
-        break;
-        
-  	  case SDL_KEYUP:
-  	    switch(rEvent.key.keysym.sym)
-  	    {
-                #ifdef CAPSLOCK_DEBIAN_WORKAROUND
-                case SDLK_CAPSLOCK: // capslock
-                     // Treat CAPSLOCK as a toggle. If on, set off and vice/versa
-                     ioctl(0, KDGKBLED, &kbd_flags);
-                     ioctl(0, KDGETLED, &kbd_led_status);
-                     if ((kbd_flags & 07) & LED_CAP)
-                     {
-                        // On, so turn off
-                        kbd_led_status &= ~LED_CAP;
-                        kbd_flags &= ~LED_CAP;
-                        inputdevice_do_keyboard(AK_CAPSLOCK, 0);
-                     } else {
-                               // Off, so turn on
-                               kbd_led_status |= LED_CAP;
-                               kbd_flags |= LED_CAP;
-                               inputdevice_do_keyboard(AK_CAPSLOCK, 1);
-                            }
-                     ioctl(0, KDSETLED, kbd_led_status);
-                     ioctl(0, KDSKBLED, kbd_flags);
-                     break;
-                 #endif
-
-				  case SDLK_LSHIFT: // Shift key
-            inputdevice_do_keyboard(AK_LSH, 0);
-            break;
-            
-				  case VK_L: // Left shoulder button
-				  case VK_R:  // Right shoulder button
-  					if(currprefs.input_tablet > TABLET_OFF) {
-  					  // Release left or right shoulder button -> stylus does left mousebutton
-    					doStylusRightClick = 0;
-            }
-            // Fall through...
-  				
-  				default:
-  				  if(currprefs.pandora_customControls) {
-  				    keycode = customControlMap[rEvent.key.keysym.sym];
-  				    if(keycode < 0) {
-  				      // Simulate mouse or joystick
-  				      SimulateMouseOrJoy(keycode, 0);
-  				      break;
-  				    }
-  				    else if(keycode > 0) {
-  				      // Send mapped key release
-				      inputdevice_do_keyboard(keycode, 0);
-  				      break;
-  				    }
-  				  }
-
-  				  modifier = rEvent.key.keysym.mod;
-  				  keycode = translate_pandora_keys(rEvent.key.keysym.sym, &modifier);
-  				  if(keycode)
-  				  {
-				      inputdevice_do_keyboard(keycode, 0);
-				      if(modifier == KMOD_SHIFT)
-  				      inputdevice_do_keyboard(AK_LSH, 0);
-            } else {
-				      if (keyboard_type == KEYCODE_UNK)
-				        inputdevice_translatekeycode(0, rEvent.key.keysym.sym, 0);
-				      else
-				        inputdevice_translatekeycode(0, rEvent.key.keysym.scancode, 0);
-				    }
-  				  break;
-  	    }
-  	    break;
-  	    
-  	  case SDL_MOUSEBUTTONDOWN:
-        if(currprefs.jports[0].id == JSEM_MICE || currprefs.jports[1].id == JSEM_MICE) {
-    	    if(rEvent.button.button == SDL_BUTTON_LEFT) {
-    	      if(currprefs.input_tablet > TABLET_OFF && !doStylusRightClick) {
-    	        // Delay mousebutton, we need new position first...
-    	        delayed_mousebutton = currprefs.pandora_tapDelay << 1;
-    	      } else {
-      	      setmousebuttonstate (0, doStylusRightClick, 1);
-      	    }
-    	    }
-    	    else if(rEvent.button.button == SDL_BUTTON_RIGHT)
-    	      setmousebuttonstate (0, 1, 1);
-        }
-  	    break;
-
-  	  case SDL_MOUSEBUTTONUP:
-        if(currprefs.jports[0].id == JSEM_MICE || currprefs.jports[1].id == JSEM_MICE) {
-    	    if(rEvent.button.button == SDL_BUTTON_LEFT) {
-  	        setmousebuttonstate (0, doStylusRightClick, 0);
-          }
-    	    else if(rEvent.button.button == SDL_BUTTON_RIGHT)
-    	      setmousebuttonstate (0, 1, 0);
-        }
-  	    break;
-  	    
-  		case SDL_MOUSEMOTION:
-  		  if(currprefs.input_tablet == TABLET_OFF) {
-          if(currprefs.jports[0].id == JSEM_MICE || currprefs.jports[1].id == JSEM_MICE) {
-  			    int x, y;
-    		    int mouseScale = currprefs.input_joymouse_multiplier / 2;
-            x = rEvent.motion.xrel;
-    				y = rEvent.motion.yrel;
-#ifdef PANDORA_SPECIFIC
-    				if(rEvent.motion.x == 0 && x > -4)
-    					x = -4;
-    				if(rEvent.motion.y == 0 && y > -4)
-    					y = -4;
-    				if(rEvent.motion.x == currprefs.gfx_size.width - 1 && x < 4)
-    					x = 4;
-    				if(rEvent.motion.y == currprefs.gfx_size.height - 1 && y < 4)
-    					y = 4;
-#endif
-  				  setmousestate(0, 0, x * mouseScale, 0);
-        	  setmousestate(0, 1, y * mouseScale, 0);
-          }
-        }
-        break;
-		}
-	}
-#endif
 	return got;
 }
 

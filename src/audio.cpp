@@ -22,7 +22,7 @@
 #include "autoconf.h"
 #include "gensound.h"
 #include "audio.h"
-#include "sd-pandora/sound.h"
+#include "sd-retro/sound.h"
 #include "savestate.h"
 #include "gui.h"
 

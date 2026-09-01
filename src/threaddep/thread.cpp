@@ -9,7 +9,7 @@
 #include "sysconfig.h"
 #include "sysdeps.h"
 
-#include "td-sdl/thread.h"
+#include "threaddep/thread.h"
 
 /* Counting semaphore on an slock/scond pair. */
 struct uae_semaphore

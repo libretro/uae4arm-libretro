@@ -4,7 +4,6 @@
   * Target specific stuff, Pandora and RaspberryPi version
   */
 
-#include <SDL.h>
 
 #define TARGET_NAME "pandora"
 

@@ -2,7 +2,7 @@
 #include "sysdeps.h"
 
 #include "options.h"
-#include "td-sdl/thread.h"
+#include "threaddep/thread.h"
 #include "traps.h"
 #include "memory.h"
 #include "audio.h"
@@ -150,9 +150,6 @@ void do_leave_program (void)
 #endif
 	cdtv_free();
  	gui_exit ();
-#ifdef USE_SDL
-  SDL_Quit ();
-#endif
   hardfile_reset();
 #ifdef AUTOCONFIG
   expansion_cleanup ();

@@ -33,7 +33,7 @@
 #include <assert.h>
 
 #include "options.h"
-#include "td-sdl/thread.h"
+#include "threaddep/thread.h"
 #include "uae.h"
 #include "memory.h"
 #include "custom.h"
@@ -86,18 +86,10 @@ bool aga_mode; /* mirror of chipset_mask & CSMASK_AGA */
 static int res_shift;
 
 
-#if defined(__LIBRETRO__)
 #include "libretro-core.h"
 extern unsigned int retrow,retroh;
-typedef struct sdl_surface {
-	int w;
-	int h;
-	int pitch;
-	unsigned char *pixels;
-}SDL_Surface ;
 
-SDL_Surface *prSDLScreen;
-#endif
+retro_surface_t *retro_screen_surface;
 
 static int linedbl;
 
@@ -2416,13 +2408,11 @@ static int render_thread (void *unused)
 void drawing_init (void)
 {
 
-#if defined(__LIBRETRO__)
-    prSDLScreen = (SDL_Surface*)malloc( sizeof(*prSDLScreen) );
-    prSDLScreen->w = retrow;
-    prSDLScreen->h = retroh;
-    prSDLScreen->pitch = retrow*2;
-    prSDLScreen->pixels =(unsigned char*)Retro_Screen;
-#endif
+    retro_screen_surface = (retro_surface_t*)malloc( sizeof(*retro_screen_surface) );
+    retro_screen_surface->w = retrow;
+    retro_screen_surface->h = retroh;
+    retro_screen_surface->pitch = retrow*2;
+    retro_screen_surface->pixels =(unsigned char*)Retro_Screen;
 
   gen_pfield_tables();
 

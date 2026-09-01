@@ -4,7 +4,7 @@
 #include "audio.h"
 
 #include "cda_play.h"
-#include "sd-pandora/sound.h"
+#include "sd-retro/sound.h"
 #include "uae.h"
 
 

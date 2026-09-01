@@ -44,7 +44,6 @@
 #include <dlfcn.h>
 #include <execinfo.h>
 #endif
-#include <SDL.h>
 
 #ifdef JIT
 extern uae_u8* current_compile_p;
@@ -392,7 +391,6 @@ void signal_segv(int signum, siginfo_t* info, void*ptr)
 	if (handled != HANDLE_EXCEPTION_NONE)
 	  return;
 
-  SDL_Quit();
   exit(1);
 }
 #endif
@@ -467,7 +465,6 @@ void signal_buserror(int signum, siginfo_t* info, void*ptr)
 
   output_log(_T("--- end exception ---\n"));
 
-  SDL_Quit();
   exit(1);
 }
 #endif
@@ -806,7 +803,6 @@ void signal_segv(int signum, siginfo_t* info, void*ptr)
 	if (handled != HANDLE_EXCEPTION_NONE)
 	  return;
 
-  SDL_Quit();
   exit(1);
 }
 #endif
@@ -912,7 +908,6 @@ void signal_buserror(int signum, siginfo_t* info, void*ptr)
 
   output_log(_T("--- end exception ---\n"));
 
-  SDL_Quit();
   exit(1);
 }
 #endif
@@ -928,6 +923,5 @@ void signal_term(int signum, siginfo_t* info, void*ptr)
 	trace_end();
 #endif
 
-  SDL_Quit();
   exit(1);
 }

@@ -26,7 +26,7 @@
 #include "blkdev.h"
 #include "gui.h"
 #include "zfile.h"
-#include "td-sdl/thread.h"
+#include "threaddep/thread.h"
 //#include "a2091.h"
 #include "uae.h"
 #include "savestate.h"

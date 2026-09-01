@@ -5,14 +5,13 @@
 
 #include "graph.h"
 #include "libretro-core.h"
-#include <SDL.h>
 
 #define  Uint8 unsigned char
 
 typedef struct{
      signed short int x, y;
      unsigned short int w, h;
-} SDL_Rect;
+} retro_rect_t;
 
 
 void DrawFBoxBmp(char  *buffer,int x,int y,int dx,int dy,unsigned   color){
@@ -484,7 +483,7 @@ static void Gui_TextInt(unsigned short *buffer,int x, int y, const char *txt, in
 {
 	int i, offset;
 	unsigned char c;
-	SDL_Rect sr, dr;
+	retro_rect_t sr, dr;
 
 	/* underline offset needs to go outside the box for smaller font */
 	if (gui_fontheight < 16)
@@ -501,15 +500,6 @@ static void Gui_TextInt(unsigned short *buffer,int x, int y, const char *txt, in
 		dr.h=gui_fontheight;
 
 		c = txt[i++];
-/*
-		if (c == UNDERLINE_INDICATOR && underline)
-		{
-			dr.h = 1;
-			dr.y += offset;
-			SDL_FillRect(pSdlGuiScrn, &dr, colors.underline);
-			continue;
-		}
-*/
 		/* for now, assume (only) Linux file paths are UTF-8 */
 #if !(defined(WIN32) || defined(USE_LOCALE_CHARSET))
 		/* Quick and dirty conversion for latin1 characters only... */
@@ -529,7 +519,6 @@ static void Gui_TextInt(unsigned short *buffer,int x, int y, const char *txt, in
 		sr.y=gui_fontheight*(c/16);
 		sr.w=gui_fontwidth;
 		sr.h=gui_fontheight;
-		//SDL_BlitSurface(pFontGfx, &sr, pSdlGuiScrn, &dr);
 		draw_guifont(buffer,dr.x,dr.y,sr.x,sr.y,col,bg);
 	}
 

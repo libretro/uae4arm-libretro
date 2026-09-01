@@ -37,11 +37,9 @@
 #ifdef CAPS
 #include "uae/caps.h"
 #endif
-#ifdef __LIBRETRO__
 #include "glob.h"
 #include "graph.h"
 #include "libretro-core.h"
-#endif
 
 #include "crc32.h"
 #include "fsdb.h"
@@ -2613,7 +2611,6 @@ void disk_insert_force (int num, const TCHAR *name, bool forcedwriteprotect)
 void DISK_GUI_change (void)
 {
 
-#ifdef __LIBRETRO__
     int idx = 0;
     if (floppy[idx].dskchange_time)
     {
@@ -2638,7 +2635,6 @@ void DISK_GUI_change (void)
                     Draw_text((char*)Retro_Screen,20 , 40 ,RGB565(7, 7, 7), RGB565(29, 29, 29) ,1, 1,40,(currprefs.floppyslots[idx].df) + i + 40);
             }
     }
-#endif
 
 }
 
@@ -4062,7 +4058,6 @@ uae_u8 *save_floppy(int *len, uae_u8 *dstptr)
 
 #endif /* SAVESTATE */
 
-#ifdef __LIBRETRO__
 std::string ReplaceAll(std::string str, const std::string& from, const std::string& to) {
     size_t start_pos = 0;
     while((start_pos = str.find(from, start_pos)) != std::string::npos) {
@@ -4151,4 +4146,3 @@ void changedisk(bool plus)
 #endif
     }
 }
-#endif

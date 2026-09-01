@@ -36,9 +36,7 @@ using namespace std;
 #include <assert.h>
 #include <limits.h>
 
-#if defined (__LIBRETRO__)
-#include <SDL.h>
-#endif
+#include "libretro.h"
 
 #ifndef UAE
 #define UAE
@@ -222,7 +220,6 @@ extern void to_upper (TCHAR *s, int len);
 #define abort() \
   do { \
     printf ("Internal error; file %s, line %d\n", __FILE__, __LINE__); \
-    SDL_Quit(); \
     (abort) (); \
 } while (0)
 #else
@@ -328,7 +325,6 @@ struct direct
 
 #endif /* _WIN32 */
 
-#if defined(PANDORA) || defined(RASPBERRY)
 
 #include <ctype.h>
 
@@ -344,7 +340,6 @@ struct direct
 #define REGPARAM3 
 #define REGPARAM
 
-#endif /* defined(PANDORA) || defined(RASPBERRY) */
 
 #ifdef DONT_HAVE_POSIX
 
@@ -444,11 +439,7 @@ extern void gui_message (const TCHAR *,...);
 #define NOINLINE __attribute__ ((noinline))
 #define NORETURN
 #elif __GNUC__ - 1 > 1 && __GNUC_MINOR__ - 1 >= 0
-#ifdef RASPBERRY
 #define STATIC_INLINE static __inline__
-#else
-#define STATIC_INLINE static __inline__ __attribute__ ((always_inline))
-#endif
 #define NOINLINE __attribute__ ((noinline))
 #define NORETURN __attribute__ ((noreturn))
 #elif _MSC_VER
@@ -532,20 +523,11 @@ STATIC_INLINE uae_u32 do_byteswap_16(uae_u32 v) {
 #  include <byteswap.h>
 # endif
 #else
-/* Else, if using SDL, try SDL's endian functions. */
-# ifdef USE_SDL
-#  include <SDL_endian.h>
-#  define bswap_16(x) SDL_Swap16(x)
-#  define bswap_32(x) SDL_Swap32(x)
-#define do_byteswap_16(x) SDL_Swap16(x)
-#define do_byteswap_32(x) SDL_Swap32(x)
-# else
 /* Otherwise, we'll roll our own. */
 #define   do_byteswap_16 bswap_16
 #define   do_byteswap_32 bswap_32
 #  define bswap_16(x) (((x) >> 8) | (((x) & 0xFF) << 8))
 #  define bswap_32(x) (((x) << 24) | (((x) << 8) & 0x00FF0000) | (((x) >> 8) & 0x0000FF00) | ((x) >> 24))
-# endif
 #endif
 
 #endif /* ARMV6_ASSEMBLY*/

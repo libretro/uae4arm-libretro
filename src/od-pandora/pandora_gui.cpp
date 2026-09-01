@@ -3,10 +3,6 @@
 #include <vector>
 #include <sstream>
 #include <unistd.h>
-#ifndef __LIBRETRO__
-#include <guichan.hpp>
-#include <guichan/sdl.hpp>
-#endif
 #include "sysconfig.h"
 #include "sysdeps.h"
 #include "config.h"
@@ -15,10 +11,6 @@
 #include "keybuf.h"
 #include "zfile.h"
 #include "gui.h"
-#ifndef __LIBRETRO__
-#include "od-pandora/gui/SelectorEntry.hpp"
-#include "gui/gui_handling.h"
-#endif
 #include "memory.h"
 #include "rommgr.h"
 #include "newcpu.h"
@@ -26,7 +18,7 @@
 #include "inputdevice.h"
 #include "xwin.h"
 #include "drawing.h"
-#include "sd-pandora/sound.h"
+#include "sd-retro/sound.h"
 #include "audio.h"
 #include "keybuf.h"
 #include "keyboard.h"
@@ -35,15 +27,9 @@
 #include "filesys.h"
 #include "autoconf.h"
 #include "blkdev.h"
-#include "SDL.h"
-#include "td-sdl/thread.h"
+#include "threaddep/thread.h"
 
-#if defined(RASPBERRY) && !defined(VITA)
- #include <linux/kd.h>
- #include <sys/ioctl.h>
-#endif
 
-#ifdef __LIBRETRO__
 // Todo: create specific file for libretro ?
 #define MAX_HD_DEVICES 5
 int currentStateNum = 0;
@@ -87,7 +73,6 @@ void SetLastActiveConfig(const char *filename)
   extractFileName(filename, last_active_config);
   removeFileExtension(last_active_config);
 }
-#endif
 
 int emulating = 0;
 
@@ -483,57 +468,12 @@ void gui_purge_events(void)
 {
 	int counter = 0;
 
-#ifndef __LIBRETRO__
-	SDL_Event event;
-	SDL_Delay(150);
-	// Strangely PS3 controller always send events, so we need a maximum number of event to purge.
-	while(SDL_PollEvent(&event) && counter < 50)
-	{
-		counter++;
-		SDL_Delay(10);
-	}
-#endif
 	keybuf_init();
 }
 
 
 int gui_update (void)
 {
-#ifndef __LIBRETRO__
-  char tmp[MAX_PATH];
-
-  fetch_savestatepath(savestate_fname, MAX_DPATH);
-  fetch_screenshotpath(screenshot_filename, MAX_DPATH);
-  
-  if(strlen(currprefs.floppyslots[0].df) > 0)
-    extractFileName(currprefs.floppyslots[0].df, tmp);
-  else
-    strncpy(tmp, last_loaded_config, MAX_PATH);
-
-  strncat(savestate_fname, tmp, MAX_DPATH - 1);
-  strncat(screenshot_filename, tmp, MAX_DPATH - 1);
-  removeFileExtension(savestate_fname);
-  removeFileExtension(screenshot_filename);
-
-  switch(currentStateNum)
-  {
-    case 1:
-  		strncat(savestate_fname,"-1.uss", MAX_PATH - 1);
-	    strncat(screenshot_filename,"-1.png", MAX_PATH - 1);
-	    break;
-    case 2:
-  		strncat(savestate_fname,"-2.uss", MAX_PATH - 1);
-  		strncat(screenshot_filename,"-2.png", MAX_PATH - 1);
-  		break;
-    case 3:
-  		strncat(savestate_fname,"-3.uss", MAX_PATH - 1);
-  		strncat(screenshot_filename,"-3.png", MAX_PATH - 1);
-  		break;
-    default: 
-	   	strncat(savestate_fname,".uss", MAX_PATH - 1);
-  		strncat(screenshot_filename,".png", MAX_PATH - 1);
-  }
-#endif
   return 0;
 }
 
@@ -587,20 +527,6 @@ extern char keyboard_type;
 
 void gui_handle_events (void)
 {
-#ifndef __LIBRETRO__
-	Uint8 *keystate = SDL_GetKeyState(NULL);
-
-	// Strangely in FBCON left window is seen as left alt ??
-	if (keyboard_type == 2) // KEYCODE_FBCON
-	{
-		if(keystate[SDLK_LCTRL] && (keystate[SDLK_LSUPER] || keystate[SDLK_LALT]) && (keystate[SDLK_RSUPER] ||keystate[SDLK_MENU]))
-			uae_reset(0,1);
-	} else
-	{
-		if(keystate[SDLK_LCTRL] && keystate[SDLK_LSUPER] && (keystate[SDLK_RSUPER] ||keystate[SDLK_MENU]))
-			uae_reset(0,1);
-	}
-#endif
 }
 
 void gui_disk_image_change (int unitnum, const char *name, bool writeprotected)
@@ -609,63 +535,6 @@ void gui_disk_image_change (int unitnum, const char *name, bool writeprotected)
 
 void gui_led (int led, int on, int brightness)
 {
-#if defined(RASPBERRY) && !defined(VITA)
-   #define LED_ALL   -1         // Define for all LEDs
-   
-   unsigned char kbd_led_status;
-   
-   // Check current prefs/ update if changed
-   if (currprefs.kbd_led_num != changed_prefs.kbd_led_num) currprefs.kbd_led_num = changed_prefs.kbd_led_num;
-   if (currprefs.kbd_led_scr != changed_prefs.kbd_led_scr) currprefs.kbd_led_scr = changed_prefs.kbd_led_scr;
-   if (currprefs.kbd_led_cap != changed_prefs.kbd_led_cap) currprefs.kbd_led_cap = changed_prefs.kbd_led_cap;
-   
-   ioctl(0, KDGETLED, &kbd_led_status);
-   
-	// Handle floppy led status
-	if (led == LED_DF0 || led == LED_DF1 || led == LED_DF2 || led == LED_DF3)
-	{ 
-		if (currprefs.kbd_led_num == led)
-		{  
-			if (on) 
-			  kbd_led_status |= LED_NUM;
-			else 
-			  kbd_led_status &= ~LED_NUM;
-		}
-		if (currprefs.kbd_led_scr == led)
-		{  
-			if (on) 
-			  kbd_led_status |= LED_SCR;
-			else 
-			  kbd_led_status &= ~LED_SCR;
-		}
-	}
-   
-	// Handle power, hd/cd led status
-	if (led == LED_POWER || led == LED_HD || led == LED_CD)
-	{ 
-		if (currprefs.kbd_led_num == led)
-		{   
-			if (on) 
-			  kbd_led_status |= LED_NUM;
-			else 
-			  kbd_led_status &= ~LED_NUM;
-		}
-		if (currprefs.kbd_led_scr == led)
-		{   
-			if (on) 
-			  kbd_led_status |= LED_SCR;
-			else 
-			  kbd_led_status &= ~LED_SCR;
-		}
-	}
-  
-  // Handle all LEDs off
-  if (led == LED_ALL) {
-     kbd_led_status &= ~LED_NUM;
-     kbd_led_status &= ~LED_SCR;
-  }
-  ioctl(0, KDSETLED, kbd_led_status);
-#endif
 }
 
 void gui_flicker_led (int led, int unitnum, int status)
@@ -701,9 +570,7 @@ void gui_flicker_led (int led, int unitnum, int status)
       cd_resetcounter = 2;
       break;
   }
-#ifdef RASPBERRY
    gui_led(led, status , -1);
-#endif
 }
 
 

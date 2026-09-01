@@ -4940,22 +4940,14 @@ void inputdevice_default_prefs (struct uae_prefs *p)
 	inputdevice_init ();
 
 	p->input_selected_setting = GAMEPORT_INPUT_SETTINGS;
-#ifdef PANDORA_SPECIFIC
-  p->input_joymouse_multiplier = 20;
-#else
   p->input_joymouse_multiplier = 2;
-#endif
 	p->input_joymouse_deadzone = 33;
 	p->input_joystick_deadzone = 33;
 	p->input_joymouse_speed = 10;
 	p->input_analog_joystick_mult = 15;
 	p->input_analog_joystick_offset = -1;
 	p->input_mouse_speed = 100;
-#ifdef __LIBRETRO__
   p->input_autofire_linecnt = 0;
-#else
-  p->input_autofire_linecnt = 8 * 312;
-#endif
 	p->input_keyboard_type = 0;
 	keyboard_default = keyboard_default_table[p->input_keyboard_type];
 	inputdevice_default_kb_all (p);

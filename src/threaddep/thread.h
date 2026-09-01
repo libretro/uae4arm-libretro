@@ -6,8 +6,8 @@
   * Copyright 1997, 2001 Bernd Schmidt
   */
 
-#ifndef UAE_TD_THREAD_H
-#define UAE_TD_THREAD_H
+#ifndef UAE_THREADDEP_THREAD_H
+#define UAE_THREADDEP_THREAD_H
 
 #include "rthreads/rthreads.h"
 
@@ -40,4 +40,4 @@ STATIC_INLINE void uae_set_thread_priority (uae_thread_id *id, int pri)
 /* Do nothing; thread exits if thread function returns.  */
 #define UAE_THREAD_EXIT do {} while (0)
 
-#endif /* UAE_TD_THREAD_H */
+#endif /* UAE_THREADDEP_THREAD_H */

@@ -22,7 +22,7 @@
 #include "crc32.h"
 #include "gui.h"
 #include "akiko.h"
-#include "td-sdl/thread.h"
+#include "threaddep/thread.h"
 #include "gayle.h"
 #include "gfxboard.h"
 #include "audio.h"
@@ -750,10 +750,8 @@ static bool load_kickstart_replacement (void)
 {
 	struct zfile *f;
 
-#ifdef __LIBRETRO__
 	const char *msg_str = "No Kickstart file found - add for better compatibility";
 	Retro_Msg(msg_str);
-#endif
 
 	f = zfile_fopen_data (_T("aros.gz"), arosrom_len, arosrom);
 	if (!f)
@@ -1134,9 +1132,6 @@ static void restore_roms(void)
 	if (!load_kickstart ()) {
     if (_tcslen (currprefs.romfile) > 0) {
 			error_log (_T("Failed to open '%s'\n"), currprefs.romfile);
-#ifndef __LIBRETRO__
-  		notify_user (NUMSG_NOROM);
-#endif
     }
 		load_kickstart_replacement ();
 	} else {

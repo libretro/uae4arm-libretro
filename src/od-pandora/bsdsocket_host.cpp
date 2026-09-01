@@ -31,7 +31,7 @@
 #include "custom.h"
 #include "autoconf.h"
 #include "traps.h"
-#include "../td-sdl/thread.h"
+#include "../threaddep/thread.h"
 #include "bsdsocket.h"
 #include "native2amiga.h"
 
@@ -1466,11 +1466,8 @@ void host_sbcleanup (SB)
 
   uae_sem_post (&sb->sem); /* destroy happens on socket thread */
 
-  /* We need to join with the socket thread to allow the thread to die
-   * and clean up resources when the underlying thread layer is pthreads.
-   * Ideally, this shouldn't be necessary, but, for example, when SDL uses
-   * pthreads, it always creates joinable threads - and we can't do anything
-   * about that. */
+  /* rthreads hands back joinable threads, so join here to let the socket
+   * thread finish and release its resources. */
   uae_wait_thread (thread);
 }
 

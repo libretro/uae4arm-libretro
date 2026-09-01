@@ -26,7 +26,7 @@
 #include "inputdevice.h"
 #include "audio.h"
 #include "fpp.h"
-#include "td-sdl/thread.h"
+#include "threaddep/thread.h"
 #include "bsdsocket.h"
 #ifdef JIT
 #include "jit/compemu.h"
@@ -1792,11 +1792,7 @@ void m68k_go (int may_quit)
 			if (savestate_state == STATE_DORESTORE)
 				savestate_state = STATE_RESTORE;
 	    if (savestate_state == STATE_RESTORE)
-#ifdef __LIBRETRO__
 		    restore_state ();
-#else
-		    restore_state (savestate_fname);
-#endif
 #endif
 			prefs_changed_cpu();
       build_cpufunctbl ();

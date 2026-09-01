@@ -6,11 +6,7 @@
   * Copyright 1997 Bernd Schmidt
   */
 
-#if defined(PANDORA) || defined(ANDROIDSDL)
 #define DEFAULT_SOUND_CHANNELS 2
-#else
-#define DEFAULT_SOUND_CHANNELS 1
-#endif
 
 // These numbers mean SOUND PRODUCER BLOCK count and length
 #define SOUND_BUFFERS_COUNT 8

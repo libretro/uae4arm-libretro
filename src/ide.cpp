@@ -18,7 +18,7 @@
 #include "uae.h"
 #include "memory.h"
 #include "newcpu.h"
-#include "td-sdl/thread.h"
+#include "threaddep/thread.h"
 #include "savestate.h"
 #include "scsi.h"
 #include "ide.h"

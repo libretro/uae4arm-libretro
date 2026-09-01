@@ -20,19 +20,14 @@
 #include "uae.h"
 #include "custom.h"
 #include "audio.h"
-#include "td-sdl/thread.h"
+#include "threaddep/thread.h"
 
 #include "cda_play.h"
 #include "archivers/mp2/kjmp2.h"
-#ifdef PANDORA
 extern "C" {
 #include "mpeg2dec/mpeg2.h"
 #include "mpeg2dec/mpeg2convert.h"
 }
-#else
-#include "mpeg2.h"
-#include "mpeg2convert.h"
-#endif
 
 /*
  0x200000 - 0x23FFFF ROM (256k)

@@ -20,9 +20,6 @@
 #include "sd-retro/sound.h"
 #include "custom.h"
 
-#ifdef ANDROIDSDL
-#include <android/log.h>
-#endif
 
 extern unsigned long next_sample_evtime;
 

@@ -41,9 +41,6 @@
 #undef strcasecmp
 #define strcasecmp _tcsicmp
 #endif
-#if !defined(__LIBRETRO__)
-#include "SDL_keysym.h"
-#endif
 
 static int config_newfilesystem;
 static struct strlist *temp_lines;
@@ -1193,13 +1190,11 @@ void cfgfile_save_options (struct zfile *f, struct uae_prefs *p, int type)
   cfgfile_write_str (f, _T("gfx_resolution"), lorestype1[p->gfx_resolution]);
 	cfgfile_write_str (f, _T("gfx_linemode"), p->gfx_vresolution > 0 ? linemode[1] : linemode[0]);
 
-#ifdef RASPBERRY
   cfgfile_write (f, _T("gfx_correct_aspect"), _T("%d"), p->gfx_correct_aspect);
   cfgfile_write (f, _T("gfx_fullscreen_ratio"), _T("%d"), p->gfx_fullscreen_ratio);
   cfgfile_write (f, _T("kbd_led_num"), _T("%d"), p->kbd_led_num);
   cfgfile_write (f, _T("kbd_led_scr"), _T("%d"), p->kbd_led_scr);
   cfgfile_write (f, _T("kbd_led_cap"), _T("%d"), p->kbd_led_cap);
-#endif
 
   cfgfile_write_bool (f, _T("immediate_blits"), p->immediate_blits);
 	cfgfile_dwrite_str (f, _T("waiting_blits"), waitblits[p->waiting_blits]);
@@ -1904,7 +1899,6 @@ static int cfgfile_parse_host (struct uae_prefs *p, TCHAR *option, TCHAR *value)
 		|| cfgfile_string (option, value, _T("filesys_inject_icons_tool"), p->filesys_inject_icons_tool, sizeof p->filesys_inject_icons_tool / sizeof (TCHAR)))
 	  return 1;
 
-#ifdef RASPBERRY
     if (cfgfile_intval (option, value, "gfx_correct_aspect", &p->gfx_correct_aspect, 1))
 	    return 1;   
 
@@ -1916,7 +1910,6 @@ static int cfgfile_parse_host (struct uae_prefs *p, TCHAR *option, TCHAR *value)
             return 1;
     if (cfgfile_intval (option, value, "kbd_led_cap", &p->kbd_led_cap, 1))
             return 1;
-#endif
 
 	if (cfgfile_string (option, value, _T("config_info"), p->info, sizeof p->info / sizeof (TCHAR))
 	  || cfgfile_string (option, value, _T("config_description"), p->description, sizeof p->description / sizeof (TCHAR)))
@@ -4418,7 +4411,7 @@ uae_u32 cfgfile_uaelib(TrapContext *ctx, int mode, uae_u32 name, uae_u32 dst, ua
 	return 0;
 }
 
-#include "sd-pandora/sound.h"
+#include "sd-retro/sound.h"
 
 void default_prefs (struct uae_prefs *p, bool reset, int type)
 {
@@ -4448,11 +4441,7 @@ void default_prefs (struct uae_prefs *p, bool reset, int type)
 	p->jports[3].id = -1;
 	if (reset) {
 		inputdevice_joyport_config_store(p, _T("mouse"), 0, -1, 0);
-#ifdef __LIBRETRO__
 		inputdevice_joyport_config_store(p, _T("joy0"), 1, -1, 0);
-#else
-		inputdevice_joyport_config_store(p, _T("joy1"), 1, -1, 0); // Select usb joystick by default
-#endif
 	}
 	p->keyboard_lang = KBD_LANG_US;
 
@@ -4474,21 +4463,14 @@ void default_prefs (struct uae_prefs *p, bool reset, int type)
   p->cachesize = 0;
 
   p->gfx_framerate = 0;
-#ifdef PANDORA_SPECIFIC
-  p->gfx_size.width = 320;
-  p->gfx_size.height = 240;
-#else
   p->gfx_size.width = 640;
   p->gfx_size.height = 262;
-#endif
   p->gfx_resolution = p->gfx_size.width > 600 ? RES_HIRES : RES_LORES;
-#ifdef RASPBERRY
   p->gfx_correct_aspect = 1;
   p->gfx_fullscreen_ratio = 100;
   p->kbd_led_num = -1; // No status on numlock
   p->kbd_led_scr = -1; // No status on scrollock
   p->kbd_led_cap = -1; // No status on capslock
-#endif
 	p->gfx_vresolution = VRES_DOUBLE;
 
   p->immediate_blits = 0;
@@ -4497,11 +4479,7 @@ void default_prefs (struct uae_prefs *p, bool reset, int type)
   p->collision_level = 2;
   p->leds_on_screen = 0;
 	p->boot_rom = 0;
-#ifdef PANDORA_SPECIFIC
-  p->fast_copper = 1;
-#else
   p->fast_copper = 0;
-#endif
 	p->cart_internal = 1;
 
 	p->cs_compatible = CP_GENERIC;
@@ -4587,11 +4565,7 @@ void default_prefs (struct uae_prefs *p, bool reset, int type)
 	p->socket_emu = 0;
 
   p->input_tablet = TABLET_OFF;
-#ifdef __LIBRETRO__
   p->key_for_menu = 0x45;//RETROK_F12;
-#else
-  p->key_for_menu = SDLK_F12;
-#endif
   p->key_for_quit = 0;
   p->button_for_menu = -1;
   p->button_for_quit = -1;
