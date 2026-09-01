@@ -1,63 +1,43 @@
  /*
   * UAE - The Un*x Amiga Emulator
-  * 
-  * Threading support, using SDL
-  * 
+  *
+  * Threading support, using libretro-common rthreads
+  *
   * Copyright 1997, 2001 Bernd Schmidt
   */
 
-#include "SDL.h"
-#include "SDL_thread.h"
+#ifndef UAE_TD_THREAD_H
+#define UAE_TD_THREAD_H
 
-/* Sempahores. We use POSIX semaphores; if you are porting this to a machine
- * with different ones, make them look like POSIX semaphores. */
-typedef SDL_sem *uae_sem_t;
+#include "rthreads/rthreads.h"
 
-STATIC_INLINE int uae_sem_init(uae_sem_t *sem, int dummy, int init)
-{
-  *sem = SDL_CreateSemaphore (init);
-  return (*sem == 0);
-}
+/* Semaphores. rthreads has no counting semaphore, so uae_semaphore is
+ * built on an slock/scond pair in thread.cpp with POSIX-like semantics. */
+struct uae_semaphore;
+typedef struct uae_semaphore *uae_sem_t;
 
-#define uae_sem_destroy(PSEM) SDL_DestroySemaphore (*PSEM)
-#define uae_sem_post(PSEM) SDL_SemPost (*PSEM)
-#define uae_sem_wait(PSEM) SDL_SemWait (*PSEM)
-#define uae_sem_trywait(PSEM) SDL_SemTryWait (*PSEM)
-#define uae_sem_getvalue(PSEM) SDL_SemValue (*PSEM)
+int uae_sem_init (uae_sem_t *sem, int dummy, int init);
+void uae_sem_destroy (uae_sem_t *sem);
+int uae_sem_post (uae_sem_t *sem);
+int uae_sem_wait (uae_sem_t *sem);
+int uae_sem_trywait (uae_sem_t *sem);
+int uae_sem_getvalue (uae_sem_t *sem);
 
 #include "commpipe.h"
 
-typedef SDL_Thread *uae_thread_id;
+typedef sthread_t *uae_thread_id;
 #define BAD_THREAD 0
+
+long uae_start_thread (const TCHAR *name, int (*f) (void *), void *arg, uae_thread_id *tid);
+long uae_start_thread_fast (void *(*f) (void *), void *arg, uae_thread_id *tid);
+void uae_wait_thread (uae_thread_id thread);
+void uae_end_thread (uae_thread_id *tid);
 
 STATIC_INLINE void uae_set_thread_priority (uae_thread_id *id, int pri)
 {
 }
 
-STATIC_INLINE void uae_end_thread (uae_thread_id *tid)
-{
-}
-
-STATIC_INLINE long uae_start_thread (const TCHAR *name, int(*f) (void *), void *arg, uae_thread_id *foo)
-{
-  uae_thread_id id = SDL_CreateThread (f, arg);
-  if(foo != NULL)
-    *foo = id;
-  return (long)id;
-}
-
-STATIC_INLINE long uae_start_thread_fast (void *(*f) (void *), void *arg, uae_thread_id *foo)
-{
-  uae_thread_id id = SDL_CreateThread ((int (*)(void *))f, arg);
-  if(foo != NULL)
-    *foo = id;
-  return (long)id;
-}
-
-STATIC_INLINE void uae_wait_thread (uae_thread_id thread)
-{
-  SDL_WaitThread (thread, (int*)0);
-}
-
 /* Do nothing; thread exits if thread function returns.  */
 #define UAE_THREAD_EXIT do {} while (0)
+
+#endif /* UAE_TD_THREAD_H */

@@ -7,7 +7,8 @@ GUI	 := $(CORE_DIR)/libretro/gui
 DEPS_DIR = $(CORE_DIR)/deps
 
 INCFLAGS := -I$(EMU) -I$(EMU)/od-pandora -I$(EMU)/include -I$(LIBRETRO) \
-	-I$(LIBRETRO)/libco -I$(LIBRETRO)/core -I$(LIBUTILS)  -I$(EMU)menu -Ideps -I$(EMU)/archivers -I$(DEPS_DIR)/zlib
+	-I$(LIBRETRO)/libco -I$(LIBRETRO)/core -I$(LIBUTILS)  -I$(EMU)menu -Ideps -I$(EMU)/archivers -I$(DEPS_DIR)/zlib \
+	-I$(DEPS_DIR)/libretro-common/include
 
 INCFLAGS += -I$(CORE_DIR)/libretro/libco \
 			-I$(CORE_DIR)/libretro/core \
@@ -175,7 +176,8 @@ OBJS += $(EMU)/jit/compemu_support.o \
 	$(EMU)/od-pandora/sigsegv_handler.o \
 	$(EMU)/sd-retro/sound_retro_new.o \
 	$(EMU)/od-pandora/pandora_gui.o \
-	$(EMU)/td-sdl/thread.o
+	$(EMU)/td-sdl/thread.o \
+	$(DEPS_DIR)/libretro-common/rthreads/rthreads.o
 
 ifneq ($(platform),vita)
 	OBJS += $(EMU)/bsdsocket.o

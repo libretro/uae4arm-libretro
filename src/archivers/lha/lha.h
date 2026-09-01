@@ -4,7 +4,11 @@
 
 #define SYSTIME_HAS_NO_TM
 #define NODIRECTORY
+#ifdef VITA
+#define TZSET
+#else
 #define FTIME
+#endif
 #define NOBSTRING
 #define NOINDEX
 #define MKTIME

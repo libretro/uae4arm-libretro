@@ -7,7 +7,6 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include <pthread.h>
 #include <errno.h>
 
 #include "sysconfig.h"

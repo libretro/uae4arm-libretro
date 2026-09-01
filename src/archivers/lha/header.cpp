@@ -227,7 +227,12 @@ gettz()
 #ifdef TZSET
 {
 	tzset();
+#ifdef VITA
+	/* newlib exports the offset as _timezone only */
+	return _timezone;
+#else
 	return timezone;
+#endif
 }
 #endif
 
